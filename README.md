@@ -96,6 +96,11 @@ command was taken from [UnionPatcher](https://github.com/LBPUnion/UnionPatcher/b
 ./oscetool --verbose --sce-type=SELF --skip-sections=FALSE --self-add-shdrs=TRUE --compress-data=TRUE --key-revision=0A --self-app-version=0001000000000000 --self-auth-id=1010000001000003 --self-vendor-id=01000002 --self-ctrl-flags=0000000000000000000000000000000000000000000000000000000000000000 --self-cap-flags=00000000000000000000000000000000000000000000003B0000000100040000 --self-type=NPDRM --self-fw-version=0003005500000000 --np-license-type=FREE --np-app-type=SPRX --np-content-id=UP0001-LBPCSPPHB_00-0000000000000000 --np-real-fname=EBOOT.BIN --encrypt /dev_hdd0/game/LBPCSPPHB/USRDIR/temp_files/EBOOT.ELF path/to/EBOOT.BIN
 ```
 
+## Patching method for main series
+besides the types, you can check out patching_eboot_elf_code.c and patching_eboot_elf_code.h to see the code that patches the EBOOT.ELF, It will work fine building it normally and outside this project, not coupled to this project. Although i did say you dont need any programming knowledge so ill explain it here<br/><br/>
+The code is based of [this regex](https://github.com/LBPUnion/UnionPatcher/blob/c45b9ec37eedade40490a1c000311b099ed71f31/UnionPatcher/Patcher.cs#L53) `"http?[^\x00]*?LITTLEBIGPLANETPS(3|P)_XML\x00*"` although i did not use regex and just took the idea from it.<br/>
+it first looks through the eboot.elf to find any `http` strings, if it finds any, it makes sure that the string starting with `http` ends with `LITTLEBIGPLANETPS3_xml` or `LITTLEBIGPLANETPSP_xml`. if it indeed does, then it calculates how much null bytes it will need to write, and makes sure the user url fits in that size, otherwise it will fail
+
 # Building
 Youd want to use linux, or wsl on windows in order to build this, basically you need to be able to build the [Tiny3D samples](https://github.com/wargio/tiny3D/tree/master/samples/sprites2D) in order to build this.<br/>
 also you'll need to install [dbglogger](https://github.com/bucanero/dbglogger)<br/>
