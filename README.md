@@ -57,6 +57,24 @@ note, if the url or digest is too long, it will get truncated, and anything beyo
 http://url_here_without_a_digest
 http://url_here_with_a_digest CustomServerDigest
 ```
+
+# Technical details (no programming or c knowledge needed to read this)
+for those intrested how this patcher works, here it is
+
+## Decryption of EBOOT.BIN files
+The app will first try to look for .rap files, in this order<br/><br/>
+`/dev_hdd0/exdata` (this is where PKGI stores .rap files)<br/>
+`/dev_hdd0/home/xxxxxxxx/exdata/` replacing `xxxxxxxx` with all the folders in home, it will iterate over the dir `/dev_hdd0/home/`<br/>
+checks every single usb port (for psnpatch)<br/>
+`/dev_usb000/exdata`<br/>
+`/dev_usb001/exdata`<br/>
+`/dev_usb002/exdata`<br/>
+`/dev_usb003/exdata`<br/>
+`/dev_usb004/exdata`<br/>
+`/dev_usb005/exdata`<br/><br/>
+then, if it still is not able to find a .rap file, it will look for the first `.rif` file inside of `/dev_hdd0/home/xxxxxxxx/exdata/` (using same method as above) then it will grab the `act.dat` file from the exdata folder, and will finally grab the idps from your ps3 using syscalls<br/><br/>
+if it cant find a .rif ethier, decryption will likely fail, although if youre able to boot the game, it ill most certainly be able to decrypt the eboot
+
 # Building
 Youd want to use linux, or wsl on windows in order to build this, basically you need to be able to build the [Tiny3D samples](https://github.com/wargio/tiny3D/tree/master/samples/sprites2D) in order to build this.<br/>
 also you'll need to install [dbglogger](https://github.com/bucanero/dbglogger)<br/>
