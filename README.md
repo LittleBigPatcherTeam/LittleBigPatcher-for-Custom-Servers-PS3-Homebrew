@@ -75,6 +75,27 @@ checks every single usb port (for psnpatch)<br/>
 then, if it still is not able to find a .rap file, it will look for the first `.rif` file inside of `/dev_hdd0/home/xxxxxxxx/exdata/` (using same method as above) then it will grab the `act.dat` file from the exdata folder, and will finally grab the idps from your ps3 using syscalls<br/><br/>
 if it cant find a .rif ethier, decryption will likely fail, although if youre able to boot the game, it ill most certainly be able to decrypt the eboot
 
+## oscetool vs scetool
+[oscetool](https://github.com/spacemanspiff/oscetool) is a clone of scetool, it works almost the exact same way as scetool but the long options in the commands are broken, so although ill refer to long options here, in the app it uses the short options
+
+## Decryption oscetool command
+command was taken from [UnionPatcher](https://github.com/LBPUnion/UnionPatcher/blob/c45b9ec37eedade40490a1c000311b099ed71f31/UnionPatcher/RemotePatch.cs#L248)
+```
+./oscetool -v -d path/to/EBOOT.BIN /dev_hdd0/game/LBPCSPPHB/USRDIR/temp_files/EBOOT.ELF
+```
+
+## Encryption oscetool command (disc)
+command was taken from [UnionPatcher](https://github.com/LBPUnion/UnionPatcher/blob/c45b9ec37eedade40490a1c000311b099ed71f31/UnionPatcher/RemotePatch.cs#L255)
+```
+./oscetool -v --sce-type=SELF --skip-sections=FALSE --key-revision=0A --self-app-version=0001000000000000 --self-auth-id=1010000001000003 --self-vendor-id=01000002 --self-ctrl-flags=0000000000000000000000000000000000000000000000000000000000000000 --self-cap-flags=00000000000000000000000000000000000000000000003B0000000100040000 --self-type=APP --self-fw-version=0003005500000000 --compress-data=true --encrypt /dev_hdd0/game/LBPCSPPHB/USRDIR/temp_files/EBOOT.ELF path/to/EBOOT.BIN
+```
+
+## Encryption oscetool command (digital)
+command was taken from [UnionPatcher](https://github.com/LBPUnion/UnionPatcher/blob/c45b9ec37eedade40490a1c000311b099ed71f31/UnionPatcher/RemotePatch.cs#L191)
+```
+./oscetool --verbose --sce-type=SELF --skip-sections=FALSE --self-add-shdrs=TRUE --compress-data=TRUE --key-revision=0A --self-app-version=0001000000000000 --self-auth-id=1010000001000003 --self-vendor-id=01000002 --self-ctrl-flags=0000000000000000000000000000000000000000000000000000000000000000 --self-cap-flags=00000000000000000000000000000000000000000000003B0000000100040000 --self-type=NPDRM --self-fw-version=0003005500000000 --np-license-type=FREE --np-app-type=SPRX --np-content-id=UP0001-LBPCSPPHB_00-0000000000000000 --np-real-fname=EBOOT.BIN --encrypt /dev_hdd0/game/LBPCSPPHB/USRDIR/temp_files/EBOOT.ELF path/to/EBOOT.BIN
+```
+
 # Building
 Youd want to use linux, or wsl on windows in order to build this, basically you need to be able to build the [Tiny3D samples](https://github.com/wargio/tiny3D/tree/master/samples/sprites2D) in order to build this.<br/>
 also you'll need to install [dbglogger](https://github.com/bucanero/dbglogger)<br/>
