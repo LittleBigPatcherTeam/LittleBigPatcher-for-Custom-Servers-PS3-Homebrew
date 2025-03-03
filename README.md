@@ -45,6 +45,15 @@ You will be waiting on this screen for a while, just pay attention to the solid 
 ![idk](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/blob/main/screenshots_for_readme/patching_done.png?raw=true)<br/>
 When you see this message, your game is now patched to the custom server! if you see an error, make sure you selected the correct game, otherwise, feel free to report an issue
 
+# Editing stuff via ftp using a phone or pc
+if youd prefer to copy text like title ids, or urls from your pc or phone then transfer them over, heres how you can do that (rerember to press TRIANGLE to refresh after making changes and to upload your changes)
+## Editing the selected title id
+go to `/dev_hdd0/game/LBPCSPPHB/USRDIR` and open up the `title_id_to_patch.txt` file in a text editor, here you can just paste in a title id then save
+
+## Editing the urls
+go to `/dev_hdd0/game/LBPCSPPHB/USRDIR` and open up the `saved_urls_x.txt` file in a text editor (replace x with the page number), then for each new line, you can paste in a url, or if there is a digest, put a space after the url and paste in the digest<br/><br/>
+note, if the url or digest is too long, it will get truncated, and anything beyond 9 lines will not be shown, if you wish to add more urls then 9, edit a different page `saved_urls_x.txt`
+
 # Building
 Youd want to use linux, or wsl on windows in order to build this, basically you need to be able to build the [Tiny3D samples](https://github.com/wargio/tiny3D/tree/master/samples/sprites2D) in order to build this.<br/>
 also you'll need to install [dbglogger](https://github.com/bucanero/dbglogger)<br/>
