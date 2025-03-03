@@ -1,0 +1,12 @@
+// they are rgba hex colour codes, not rgb hex colour codes, so if you want red FF0000 for example, put in #FF0000FF, othwise it wont be visible
+TITLE_FONT_COLOUR #ffffffff // white
+TITLE_BG_COLOUR #2b2600ff // some ugly moss green
+SELECTABLE_NORMAL_FONT_COLOUR #ffffffff // white
+TURNED_ON_FONT_COLOUR #FFFF00ff // yellow
+BACKGROUND_COLOUR #002b26ff // very dark turquiose
+SELECTED_FONT_BG_COLOUR #575757ff // dark grey
+UNSELECTED_FONT_BG_COLOUR #00000000 // invisible
+ERROR_MESSAGE_COLOUR #FF0000FF // red
+ERROR_MESSAGE_BG_COLOUR #00000000 // invisible
+SUCCESS_MESSAGE_COLOUR #00FF00FF // green
+SUCCESS_MESSAGE_BG_COLOUR #00000000 // invisible
