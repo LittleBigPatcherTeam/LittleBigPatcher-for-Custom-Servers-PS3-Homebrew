@@ -303,9 +303,9 @@ pngData *texture_input, int * img_index, u8 saved_urls_txt_num, bool normalise_d
 			y += CHARACTER_HEIGHT;
 			DrawString(x,y,"Use the D-pad (up and down) to navigate through the menus, left and right to change pages");
 			y += CHARACTER_HEIGHT;
-/* 			DrawString(x,y,"Check out https://github.com/asottile/babi for more information");
+			DrawString(x,y,"Check out https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew");
 			y += CHARACTER_HEIGHT;
-			DrawString(x,y,"As per GPL-3.0 licence you MUST be provided the source code of this app!, refer to above for more info"); */
+			DrawString(x,y,"As per GPL-3.0 licence you MUST be provided the source code of this app!, refer to above for more info");
 			break;
 		case MENU_PATCH_GAMES:
 			DrawFormatString(x,y,"Patch a game");
