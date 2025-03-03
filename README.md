@@ -17,7 +17,7 @@ You can save up to 9 urls for easy switching between servers, and with 98 possib
 You'll notice when going to the Edit urls menu, when you go down, it selects a space after the actual url, or text after the space. This is the digest, now you do not need to know what a digest is, all you need to know is that if you are adding a Refresh based custom server, for the digest enter in `CustomServerDigest` otherwise leave it empty. Press CROSS to edit a url or digest
 
 ## What is a Title id?
-First of all, you want to get the title id of your game, and make sure that the game is updated, for discs, you can just look at the bottom spin of the case, or at the bottom of the disc (do not include the `-`)<br/>
+First of all, you want to get the title id of your game, and make sure that the game is updated, for discs, you can just look at the bottom of the spine of the case, or at the bottom of the disc (do not include the `-`)<br/>
 or, if you have webMAN MOD installed, you can boot the game, then press PS button to be on xmb, but do not quit the game, then press and hold R2 + CIRCLE then the `ID: NPUA81116` will show up in top right corner
 
 ## Patching!
