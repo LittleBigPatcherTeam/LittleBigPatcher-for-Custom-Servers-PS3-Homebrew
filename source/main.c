@@ -862,7 +862,7 @@ s32 main(s32 argc, const char* argv[])
 	second_thread_args.title_id[0] = 0;
 	get_idps((u8*)second_thread_args.idps);
 	
-	dbglogger_init_str("file:/dev_hdd0/tmp/dbglogger.log");
+	//dbglogger_init_str("file:/dev_hdd0/tmp/dbglogger.log");
 	load_config();
 	rename(OLD_SAVED_URLS_TXT,NEW_NUM_1_SAVED_URLS_TXT);
 	if (!does_file_exist(NEW_NUM_1_SAVED_URLS_TXT)) {
@@ -907,7 +907,7 @@ s32 main(s32 argc, const char* argv[])
 	char patch_method[200];
 	
 	char pretty_showey[500];
-	char icon_0_main_path[sizeof("/dev_hdd0/game/NPUA81116/ICON0.PNG")];
+	char icon_0_main_path[sizeof("/dev_hdd0/game/ABCD12345/ICON0.PNG")];
 	pngData icon_0_main;
 	int icon_0_main_index = -1;
 	
