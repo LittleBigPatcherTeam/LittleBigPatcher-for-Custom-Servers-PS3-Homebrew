@@ -32,11 +32,6 @@ char * get_title_id_from_param(char * param_sfo_file_name)
 		
 		return 0;
 	}
-/* 	char * delete_me_just_beacuse_this_func_is_ass;
-	fclose(sfo);
-	delete_me_just_beacuse_this_func_is_ass = malloc(sizeof("temp thinhg lmao kill me pls"));
-	strcpy(delete_me_just_beacuse_this_func_is_ass,"w");
-	return delete_me_just_beacuse_this_func_is_ass; */
 	
 	u32 param_sfo_header;
 	u32 param_sfo_version;
