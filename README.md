@@ -62,7 +62,7 @@ http://url_here_with_a_digest CustomServerDigest
 for those intrested how this patcher works, here it is
 
 ## What font is used?
-### NotoSans-Regular.ttf
+### NotoSans-Regular.ttf is used, it is a free open source font, and i also edited it to replace empty characters with the action buttons as show in the gui (they are crappy cause i made them)
 
 ## Decryption of EBOOT.BIN files
 The app will first try to look for .rap files, in this order<br/><br/>
