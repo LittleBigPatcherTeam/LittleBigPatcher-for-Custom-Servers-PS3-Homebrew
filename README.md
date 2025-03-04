@@ -114,8 +114,8 @@ it first looks through the eboot.elf to find any `http` strings, if it finds any
 
 ### for digest, it looks through a list of known digests, and does the above, just find the digest string instead of http, and skip step 2
 
-## Patching method for main series
-
+## Patching method for LittleBigPlanet Karting
+it will look for the string `lbpk.ps3.online.scea.com\0`, basically the same as above just find the lbp k url string instead of http, and skip step 2
 
 # Building
 Youd want to use linux, or wsl on windows in order to build this, basically you need to be able to build the [Tiny3D samples](https://github.com/wargio/tiny3D/tree/master/samples/sprites2D) in order to build this.<br/>
