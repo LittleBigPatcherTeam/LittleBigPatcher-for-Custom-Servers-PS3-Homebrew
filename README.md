@@ -99,7 +99,18 @@ command was taken from [UnionPatcher](https://github.com/LBPUnion/UnionPatcher/b
 ## Patching method for main series
 besides the types, you can check out patching_eboot_elf_code.c and patching_eboot_elf_code.h to see the code that patches the EBOOT.ELF, It will work fine building it normally and outside this project, not coupled to this project. Although i did say you dont need any programming knowledge so ill explain it here<br/><br/>
 The code is based of [this regex](https://github.com/LBPUnion/UnionPatcher/blob/c45b9ec37eedade40490a1c000311b099ed71f31/UnionPatcher/Patcher.cs#L53) `"http?[^\x00]*?LITTLEBIGPLANETPS(3|P)_XML\x00*"` although i did not use regex and just took the idea from it.<br/>
-it first looks through the eboot.elf to find any `http` strings, if it finds any, it makes sure that the string starting with `http` ends with `LITTLEBIGPLANETPS3_xml` or `LITTLEBIGPLANETPSP_xml`. if it indeed does, then it calculates how much null bytes it will need to write, and makes sure the user url fits in that size, otherwise it will fail
+it first looks through the eboot.elf to find any `http` strings, if it finds any, it makes sure that the string starting with `http` ends with `LITTLEBIGPLANETPS3_xml` or `LITTLEBIGPLANETPSP_xml`. if it indeed does, then it calculates how much null bytes it will need to write, and makes sure the user url fits in that size, otherwise it will fail<br/><br/>
+### step 1, Find the http string
+![idk](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/blob/main/screenshots_for_readme/elf_patch_step_1.png?raw=true)<br/>
+### step 2, Check if it ends with /LITTLEBIGPLANETPS3_XML\0 or /LITTLEBIGPLANETPSP_XML\0
+![idk](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/blob/main/screenshots_for_readme/elf_patch_step_2.png?raw=true)<br/>
+### step 3, Count the amount of extra null bytes (\0) at the end, in this case theres one more extra null byte
+![idk](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/blob/main/screenshots_for_readme/elf_patch_step_3.png?raw=true)<br/>
+### step 4, Check if the url is less then or equal to the full selection (including 1 null byte at the end)
+### step 5, Fill the entire thing with null bytes
+![idk](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/blob/main/screenshots_for_readme/elf_patch_step_4.png?raw=true)<br/>
+### step 6, Paste in the new url
+![idk](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/blob/main/screenshots_for_readme/elf_patch_step_5.png?raw=true)<br/>
 
 # Building
 Youd want to use linux, or wsl on windows in order to build this, basically you need to be able to build the [Tiny3D samples](https://github.com/wargio/tiny3D/tree/master/samples/sprites2D) in order to build this.<br/>
