@@ -6,6 +6,7 @@ A simple way to patch your LittleBigPlanet games to connect to custom servers wi
 ![idk](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/blob/main/screenshots_for_readme/main_menu.png?raw=true)<br/>
 
 # Features and FAQ
+## works on both PS3 and RPCS3
 ## Not a pretty GUI, but functional!
 The gui will probably not take up your entire screen, this is to ensure it will fit on all screens
 
@@ -18,6 +19,9 @@ You can save up to 9 urls for easy switching between servers, and with 98 possib
 You'll notice when going to the Edit urls menu, when you go down, it selects a space after the actual url, or text after the space. This is the digest, now you do not need to know what a digest is, all you need to know is that if you are adding a Refresh based custom server, for the digest enter in `CustomServerDigest` otherwise leave it empty. Press CROSS to edit a url or digest
 
 ## What is a Title id?
+### RPCS3
+If you are on RPCS3, it will be the Serial next to your game<br/>![idk](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/blob/main/screenshots_for_readme/rpcs3_title_id_where.png?raw=true)
+### PS3
 First of all, you want to get the title id of your game, and make sure that the game is updated, for discs, you can just look at the bottom of the spine of the case, or at the bottom of the disc (do not include the `-`)<br/>
 or, if you have webMAN MOD installed, you can boot the game, then press PS button to be on xmb, but do not quit the game, then press and hold R2 + CIRCLE then the `ID: NPUA81116` will show up in top right corner
 
