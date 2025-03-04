@@ -103,7 +103,7 @@ it first looks through the eboot.elf to find any `http` strings, if it finds any
 ### step 1, Find the http string
 ![idk](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/blob/main/screenshots_for_readme/elf_patch_step_1.png?raw=true)<br/>
 ### step 2, Check if it ends with /LITTLEBIGPLANETPS3_XML\0 or /LITTLEBIGPLANETPSP_XML\0
-![idk](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/blob/main/screenshots_for_readme/elf_patch_step_2.png?raw=true)<br/>
+![idk](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/blob/main/screenshots_for_readme/elf_patch_step_2_alt.png?raw=true)<br/>
 ### step 3, Count the amount of extra null bytes (\0) at the end, in this case theres one more extra null byte
 ![idk](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/blob/main/screenshots_for_readme/elf_patch_step_3.png?raw=true)<br/>
 ### step 4, Check if the url is less then or equal to the full selection (including 1 null byte at the end)
