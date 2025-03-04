@@ -112,6 +112,11 @@ it first looks through the eboot.elf to find any `http` strings, if it finds any
 ### step 6, Paste in the new url
 ![idk](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/blob/main/screenshots_for_readme/elf_patch_step_5.png?raw=true)<br/>
 
+### for digest, it looks through a list of known digests, and does the above, just find the digest string instead of http, and skip step 2
+
+## Patching method for main series
+
+
 # Building
 Youd want to use linux, or wsl on windows in order to build this, basically you need to be able to build the [Tiny3D samples](https://github.com/wargio/tiny3D/tree/master/samples/sprites2D) in order to build this.<br/>
 also you'll need to install [dbglogger](https://github.com/bucanero/dbglogger)<br/>
