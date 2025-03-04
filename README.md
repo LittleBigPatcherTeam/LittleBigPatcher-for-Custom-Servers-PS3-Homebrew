@@ -132,3 +132,5 @@ then you can run the python script in python3 `python3 build.py` in order to bui
 ### For helper functions such as the on screen keyboard input, getting idps, and for the idea of using analogue stick for controls as well as dpad
 ## [Tiny3d samples](https://github.com/wargio/tiny3D.git)
 ### the building blocks of the GUI, allowing to easily put text on the screen and navigate the menus
+## [UnionPatcher](https://github.com/LBPUnion/UnionPatcher)
+### For the idea of a patcher, and the oscetool commands for encryption and decryption
