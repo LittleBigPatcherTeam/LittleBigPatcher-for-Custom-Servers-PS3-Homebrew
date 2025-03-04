@@ -61,6 +61,9 @@ http://url_here_with_a_digest CustomServerDigest
 # Technical details (no programming or c knowledge needed to read this)
 for those intrested how this patcher works, here it is
 
+## What font is used?
+### NotoSans-Regular.ttf
+
 ## Decryption of EBOOT.BIN files
 The app will first try to look for .rap files, in this order<br/><br/>
 `/dev_hdd0/exdata` (this is where PKGI stores .rap files)<br/>
