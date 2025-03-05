@@ -21,6 +21,12 @@ You'll notice when going to the Edit urls menu, when you go down, it selects a s
 ## What is a Title id?
 ### RPCS3
 If you are on RPCS3, it will be the Serial next to your game<br/>![idk](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/blob/main/screenshots_for_readme/rpcs3_title_id_where.png?raw=true)
+### Browse games for Title id
+![idk](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/blob/main/screenshots_for_readme/about2clickbrowsegames.png?raw=true)
+![idk](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/blob/main/screenshots_for_readme/browsing_my_games.png?raw=true)<br/>
+If you'd prefer, select the Browse games for Title id option on the Patch a game menu, there you can browse your games that the app can detect, then select a title id by pressing CROSS<br/><br/>
+Yes, all the games will show, just keeping going down and the rest will load
+![idk](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/blob/main/screenshots_for_readme/browsing_my_games_bottom_of_list.png?raw=true)<br/>
 ### PS3
 First of all, you want to get the title id of your game, and make sure that the game is updated, for discs, you can just look at the bottom of the spine of the case, or at the bottom of the disc (do not include the `-`)<br/>
 or, if you have webMAN MOD installed, you can boot the game, then press PS button to be on xmb, but do not quit the game, then press and hold R2 + CIRCLE then the `ID: NPUA81116` will show up in top right corner
