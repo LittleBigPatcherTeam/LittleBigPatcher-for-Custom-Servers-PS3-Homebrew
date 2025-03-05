@@ -29,7 +29,7 @@ SCETOOL_FLAGS	+=
 #---------------------------------------------------------------------------------
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	source
+SOURCES		:=	source source/fail0verflow_PS3_tools
 DATA		:=	data
 SHADERS		:=	shaders
 INCLUDES	:=	include
@@ -55,7 +55,7 @@ LDFLAGS		=	$(MACHDEP) -Wl,-Map,$(notdir $@).map
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=
+LIBDIRS	:= 
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional

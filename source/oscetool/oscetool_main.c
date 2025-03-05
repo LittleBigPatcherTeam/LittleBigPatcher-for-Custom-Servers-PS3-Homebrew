@@ -400,6 +400,10 @@ int run_scetool(int argc, char **argv)
   // for whatever reason, theese are not going into the argv
   filetype_value = "SELF";
   skip_sections_value = "FALSE";
+  // might consider just shoving all of them here
+  if (global_is_digital_eboot) {
+	 np_realfilename_value = "EBOOT.BIN";
+  }
 
     backend_cmd_encrypt();
   }

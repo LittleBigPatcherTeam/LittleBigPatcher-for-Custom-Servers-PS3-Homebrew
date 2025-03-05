@@ -29,6 +29,7 @@
 #include "patching_eboot_elf_code.h"
 #include "for_oscetools_gloabls.h"
 #include "get_idps.h"
+#include "fail0verflow_PS3_tools/unself.h"
 
 #define BTN_LEFT       32768
 #define BTN_DOWN       16384
@@ -856,8 +857,17 @@ void patch_eboot_thread(void *arg)
 	run_scetool(5,argv_for_dec);
 	
 	if (!does_file_exist(WORKING_DIR "EBOOT.ELF")) {
-		args->has_finished = 1;
-		sysThreadExit(THREAD_RET_EBOOT_DECRYPT_FAILED);
+		dbglogger_log("oscetool decrypt failed, trying unself");
+		// dont give up just yet!
+		char *argv_for_unself[] = {"L",out_and_in_bin,WORKING_DIR "EBOOT.ELF", NULL};
+		unself_main(3,argv_for_unself);
+		
+		
+		if (!does_file_exist(WORKING_DIR "EBOOT.ELF")) {
+			args->has_finished = 1;
+			sysThreadExit(THREAD_RET_EBOOT_DECRYPT_FAILED);
+		}
+		global_is_digital_eboot = 1;
 	}
 	
 	dbglogger_log("start patching");
@@ -874,8 +884,9 @@ void patch_eboot_thread(void *arg)
 	sprintf(out_bin,"/dev_hdd0/game/%s/USRDIR/EBOOT.BIN",args->title_id);
 	
 	remove(out_bin); // remove the old EBOOT.BIN to ensure that it actually encrypted the file
-	
+	// some of the args in argv is not getting loaded, refer to oscetool_main.c for more info
 	if (global_is_digital_eboot) {
+		dbglogger_log("Encrypting for digital");
 		char tmp_arg1_for_enc[] = "L";
 		char tmp_arg2_for_enc[] = "-v";
 		char tmp_arg3_for_enc[] = "-0=SELF";
@@ -926,6 +937,7 @@ void patch_eboot_thread(void *arg)
 		run_scetool(19+2,argv_for_enc);
 	}
 	else {
+		dbglogger_log("Encrypting for disc");
 		char tmp_arg1_for_disc_enc[] = "L";
 		char tmp_arg2_for_disc_enc[] = "-v";
 		char tmp_arg3_for_disc_enc[] = "-0=SELF";
