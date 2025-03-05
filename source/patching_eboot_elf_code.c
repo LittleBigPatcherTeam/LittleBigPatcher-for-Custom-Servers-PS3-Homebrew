@@ -9,7 +9,7 @@ typedef unsigned char u8; */
 
 #define SEARCHING_BUFFER_SIZE 4096
 
-// any other digests shall be added here for refresh
+// any other digests shall be added here for refresh or normalise_digest
 const char replace_digests[4][MAX_DIGEST_LEN_INCL_NULL] = {"!?/*hjk7duOZ1f@daX","$ghj3rLl2e5E28@~[!","9yF*A&L#5i3q@9|&*F","CustomServerDigest"};
 
 
