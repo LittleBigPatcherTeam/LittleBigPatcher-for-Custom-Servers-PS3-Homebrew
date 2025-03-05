@@ -106,6 +106,10 @@ char * get_title_id_from_param(char * param_sfo_file_name)
 		fseek(sfo,data_table_start+data_offset,SEEK_SET);
 		
 		// we do data_max_len because some param.sfo editors do not edit the data_len, and the ps3 still reads this full title
+		if (data_max_len > 128) {
+			fclose(sfo);
+			return 0;
+		}
 		game_name = (char*)malloc(data_max_len);
 		
 		fread(game_name,1,data_max_len,sfo);

@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <dirent.h>
 
 #include "colours_config.h"
 #include "font_stuff.h"
@@ -70,11 +71,23 @@
 #define THREAD_RET_EBOOT_PATCHED 6
 #define THREAD_RET_EBOOT_BACKUP_FAILED 7
 
+
 #define MENU_MAIN 0
+#define MENU_MAIN_ARROW 4-1
+
 #define MENU_SELECT_URLS 1
+#define MENU_SELECT_URLS_ARROW saved_urls_count-1
+
 #define MENU_EDIT_URLS 2
+#define MENU_EDIT_URLS_ARROW (saved_urls_count-1)*2+1
+
+#define MENU_PATCH_GAMES_ARROW 6-1
 #define MENU_PATCH_GAMES 3
 
+#define MENU_BROWSE_GAMES 4
+
+
+#define YES_NO_POPUP_ARROW 2-1
 #define YES_NO_GAME_POPUP_REVERT_EBOOT 1
 #define YES_NO_GAME_POPUP_PATCH_GAME 2
 
@@ -86,9 +99,16 @@
 #define DEFAULT_TITLE_ID "BCES00000"
 
 #define CAUSE_A_PS3_FREEZE *(int*)0x69 = 0
-// ¹†‡‰ ×÷±ƒ
+
+#define DONE_A_SWITCH has_done_a_switch = 1; load_global_title_id()
+
 padInfo padinfo;
 padData paddata;
+
+struct TitleIdAndGameName {
+	char title_id[sizeof(DEFAULT_TITLE_ID)];
+	char game_name[128];
+};
 
 struct UrlToPatchTo {
 	char url[MAX_URL_LEN_INCL_NULL];
@@ -200,7 +220,7 @@ void draw_png(pngData *texture_input, int img_index, int x_coord, int y_coord) {
 }
 
 void drawScene(u8 current_menu,int menu_arrow, bool is_alive_toggle_thing, u8 error_yet_to_press_ok, char* error_msg, int yes_no_game_popup, int started_a_thread,
-pngData *texture_input, int * img_index, u8 saved_urls_txt_num, bool normalise_digest_checked
+pngData *texture_input, int * img_index, u8 saved_urls_txt_num, bool normalise_digest_checked, struct TitleIdAndGameName browse_games_buffer[], u32 browse_games_buffer_size, u32 browse_games_buffer_start,char * global_title_id
 )
 {
 	float x, y;
@@ -325,15 +345,20 @@ pngData *texture_input, int * img_index, u8 saved_urls_txt_num, bool normalise_d
 
 			bg_colour = (menu_arrow == 2) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
 			SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
+			DrawFormatString(x,y,"Browse games for Title id");
+			y += CHARACTER_HEIGHT;
+
+			bg_colour = (menu_arrow == 3) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
+			SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
 			DrawFormatString(x,y,"Revert patches");
 			y += CHARACTER_HEIGHT;
 			
-			bg_colour = (menu_arrow == 3) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
+			bg_colour = (menu_arrow == 4) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
 			SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
 			DrawFormatString(x,y,"Patch! (%s)",PATCH_METHOD_MAIN_SERIES);
 			y += CHARACTER_HEIGHT;
 
-			bg_colour = (menu_arrow == 4) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
+			bg_colour = (menu_arrow == 5) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
 			SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
 			DrawFormatString(x,y,"Patch! (%s)",PATCH_METHOD_KARTING);
 			y += CHARACTER_HEIGHT;
@@ -410,7 +435,19 @@ pngData *texture_input, int * img_index, u8 saved_urls_txt_num, bool normalise_d
 				i++;
 			}
 			break;
-
+		case MENU_BROWSE_GAMES:
+			DrawFormatString(x,y,"Browse games! Title id: %s",global_title_id);
+			y += CHARACTER_HEIGHT;
+			
+			for (int i = 0; i < browse_games_buffer_size; i++) {
+				bg_colour = (menu_arrow == (i + browse_games_buffer_start)) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
+				font_colour = (strcmp(global_title_id,browse_games_buffer[i].title_id) == 0) ? TURNED_ON_FONT_COLOUR : SELECTABLE_NORMAL_FONT_COLOUR;
+				SetFontColor(font_colour, bg_colour);
+				DrawFormatString(x,y,"%s %s",browse_games_buffer[i].title_id,browse_games_buffer[i].game_name);
+				y += CHARACTER_HEIGHT;
+			}
+			
+			break;
 	}
 
 }
@@ -631,14 +668,98 @@ int set_arrow(int menu_arrow,unsigned btn_pressed, int max_arrow)
 	return new_arrow;
 }
 
-
 bool title_id_exists(char * title_id)
 {
 	char fname[sizeof("/dev_hdd0/game/ABCD12345/USRDIR/EBOOT.BIN")];
-	sprintf(fname,"/dev_hdd0/game/%s/USRDIR/EBOOT.BIN",global_title_id);
+	sprintf(fname,"/dev_hdd0/game/%s/USRDIR/EBOOT.BIN",title_id); // assumes that title_id is of lenght 9
 	
 	return does_file_exist(fname);
 }
+
+u32 total_count_of_patchable_games(u32 start_offset, u32 end_length)
+{
+	assert(end_length > 0);
+	u32 total_count = 0;
+	u32 start_counting = 0;
+	DIR *game_dir = opendir("/dev_hdd0/game");
+	struct dirent* reader;
+	if (game_dir != NULL) {
+		while ((reader = readdir(game_dir)) != NULL) {
+			if (strcmp(reader->d_name,".") == 0 || strcmp(reader->d_name,"..") == 0) {
+				continue;
+			}
+			if (!is_valid_title_id(reader->d_name)) {
+				continue;
+			}
+			if (!title_id_exists(reader->d_name)) {
+				continue;
+			}
+			
+			if (start_counting >= start_offset) {
+				total_count++;
+				if (total_count >= end_length) {
+					break;
+				}
+			}
+			else {
+				start_counting++;
+			}
+
+		}
+		closedir(game_dir);
+	}
+	return total_count;
+}
+
+u32 load_patchable_games(struct TitleIdAndGameName buffer[], u32 start_offset, u32 end_length)
+{
+	assert(end_length > 0);
+	u32 total_count = 0;
+	u32 start_counting = 0;
+	DIR *game_dir = opendir("/dev_hdd0/game");
+	struct dirent* reader;
+	char * game_name;
+	char param_sfo_path[sizeof("/dev_hdd0/game/ABCD12345/PARAM.SFO")];
+	if (game_dir != NULL) {
+		while ((reader = readdir(game_dir)) != NULL) {
+			if (strcmp(reader->d_name,".") == 0 || strcmp(reader->d_name,"..") == 0) {
+				continue;
+			}
+			if (!is_valid_title_id(reader->d_name)) {
+				continue;
+			}
+			if (!title_id_exists(reader->d_name)) {
+				continue;
+			}
+			
+			if (start_counting >= start_offset) {
+				
+				strcpy(buffer[total_count].title_id,reader->d_name);
+				sprintf(param_sfo_path,"/dev_hdd0/game/%s/PARAM.SFO",reader->d_name); // ignore the warning on this line, we already ensured that the folder name is 9 chars long
+				game_name = get_title_id_from_param(param_sfo_path);
+				if (game_name == 0) {
+					strcpy(buffer[total_count].game_name,"Unknown??");
+				}
+				else {
+					strcpy(buffer[total_count].game_name,game_name);
+					free(game_name);
+				}
+				
+				total_count++;
+				if (total_count >= end_length) {
+					break;
+				}
+			}
+			else {
+				start_counting++;
+			}
+
+		}
+		closedir(game_dir);
+	}
+	return total_count;
+}
+
 
 int revert_eboot(char * title_id)
 {
@@ -917,6 +1038,14 @@ s32 main(s32 argc, const char* argv[])
 	u8 current_menu = MENU_MAIN;
 	int menu_arrow = 0;
 	u8 saved_urls_txt_num = 1;
+	
+	u32 browse_games_arrow = 0;
+	
+	u32 browse_games_buffer_start = 0;
+	u32 browse_games_buffer_max_size = MAX_LINES;
+	u32 browse_games_buffer_size = 0;
+	struct TitleIdAndGameName browse_games_buffer[browse_games_buffer_max_size];
+	
 	// Ok, everything is setup. Now for the main loop.
 	while(1) {
 		// menu control logic
@@ -1028,23 +1157,26 @@ s32 main(s32 argc, const char* argv[])
 					yes_no_game_popup = 0;
 					menu_arrow = 0;
 				}
-				menu_arrow = set_arrow(menu_arrow,my_btn,1);
+				menu_arrow = set_arrow(menu_arrow,my_btn,YES_NO_POPUP_ARROW);
 				goto draw_scene_direct;
 			}
 			// refresh for global_title_id anywhere, can also put other things that refresh should refresh everywhere
 			if (my_btn & BTN_TRIANGLE) {
-				has_done_a_switch = 1;
-				load_global_title_id();
+				DONE_A_SWITCH;
 				load_config();
 				menu_arrow = 0;
 			}
 			
 			// This might be differnt depdning on what menu but for now itll suffice
-			if (my_btn & BTN_CIRCLE) { 
-				has_done_a_switch = 1;
-				load_global_title_id();
+			if (my_btn & BTN_CIRCLE) {
+				DONE_A_SWITCH;
 				menu_arrow = 0;
-				current_menu = MENU_MAIN;
+				if (current_menu == MENU_BROWSE_GAMES) {
+					current_menu = MENU_PATCH_GAMES;
+				}
+				else {
+					current_menu = MENU_MAIN;
+				}
 			}
 			free_png_from_memory(&icon_0_main,&icon_0_main_index);
 			// normal menus
@@ -1052,7 +1184,7 @@ s32 main(s32 argc, const char* argv[])
 				switch (current_menu) {
 					case MENU_SELECT_URLS:
 					case MENU_EDIT_URLS:
-						has_done_a_switch = 1;
+						DONE_A_SWITCH;
 						selected_url_index = RESET_SELECTED_URL_INDEX;
 						if (my_btn & BTN_RIGHT) {
 							if (saved_urls_txt_num >= 99) {
@@ -1074,8 +1206,7 @@ s32 main(s32 argc, const char* argv[])
 				}
 			}
 			if (my_btn & BTN_CROSS) {
-				has_done_a_switch = 1;
-				load_global_title_id();
+				DONE_A_SWITCH;
 				switch (current_menu) {
 					case MENU_MAIN:
 						switch (menu_arrow) {
@@ -1112,8 +1243,12 @@ s32 main(s32 argc, const char* argv[])
 								second_thread_args.normalise_digest = !second_thread_args.normalise_digest;
 								break;
 							case 2:
+								current_menu = MENU_BROWSE_GAMES;
+								menu_arrow = 0;
+								break;
 							case 3:
 							case 4:
+							case 5:
 								if (!title_id_exists(global_title_id)) {
 									error_yet_to_press_ok = 1;
 									sprintf(error_msg,"We could not find %s, is the title id correct? also make sure the game is updated",global_title_id);
@@ -1137,17 +1272,17 @@ s32 main(s32 argc, const char* argv[])
 									sprintf(pretty_showey,"\n%s\nTitle id: %s\nwith the url\n%s",game_title,global_title_id,temp_show.url);
 								}
 								
-								if (menu_arrow == 2) {
+								if (menu_arrow == 3) {
 									yes_no_game_popup = YES_NO_GAME_POPUP_REVERT_EBOOT;
 									sprintf(error_msg,"Do you want to revert patches on\n%s\nTitle id: %s",game_title,global_title_id);
 								}
 								
 								else {
-									if (menu_arrow == 3) {
+									if (menu_arrow == 4) {
 										second_thread_args.patch_func = &patch_eboot_elf_main_series;
 										strcpy(patch_method,PATCH_METHOD_MAIN_SERIES);
 									}
-									else if (menu_arrow == 4) {
+									else if (menu_arrow == 5) {
 										second_thread_args.patch_func = &patch_eboot_elf_karting;
 										strcpy(patch_method,PATCH_METHOD_KARTING);
 									}
@@ -1191,8 +1326,18 @@ s32 main(s32 argc, const char* argv[])
 						write_saved_urls(saved_urls_txt_num);
 						
 						break;
+					case MENU_BROWSE_GAMES:
+						strcpy(global_title_id,browse_games_buffer[menu_arrow - browse_games_buffer_start].title_id);
+						save_global_title_id_to_disk();	
+						break;
 				}
-				menu_arrow = 0;
+				// put code here if you dont want the menu arrow to reset
+				if (current_menu == MENU_BROWSE_GAMES) {
+				
+				}
+				else {
+					menu_arrow = 0;
+				}
 			}
 			switch (current_menu) {
 				case MENU_MAIN:
@@ -1201,7 +1346,7 @@ s32 main(s32 argc, const char* argv[])
 						has_done_a_switch = 0;
 					}
 					
-					menu_arrow = set_arrow(menu_arrow,my_btn,3);
+					menu_arrow = set_arrow(menu_arrow,my_btn,MENU_MAIN_ARROW);
 
 					break;
 				
@@ -1219,7 +1364,7 @@ s32 main(s32 argc, const char* argv[])
 						has_done_a_switch = 0;
 					}
 					
-					menu_arrow = set_arrow(menu_arrow,my_btn,4);
+					menu_arrow = set_arrow(menu_arrow,my_btn,MENU_PATCH_GAMES_ARROW);
 
 					break;
 				
@@ -1231,11 +1376,32 @@ s32 main(s32 argc, const char* argv[])
 						has_done_a_switch = 0;
 					}
 					if (current_menu == MENU_EDIT_URLS) {
-						menu_arrow = set_arrow(menu_arrow,my_btn,(saved_urls_count-1)*2+1);
+						menu_arrow = set_arrow(menu_arrow,my_btn,MENU_EDIT_URLS_ARROW);
 					}
 					else {
-						menu_arrow = set_arrow(menu_arrow,my_btn,saved_urls_count-1);
+						menu_arrow = set_arrow(menu_arrow,my_btn,MENU_SELECT_URLS_ARROW);
 					}
+					break;
+				
+				case MENU_BROWSE_GAMES:
+					if (has_done_a_switch) {
+						browse_games_arrow = total_count_of_patchable_games(0,0xFFFFFFFF) - 1;
+						if (menu_arrow == 0) {
+							browse_games_buffer_start = 0;
+							browse_games_buffer_size = load_patchable_games(browse_games_buffer,browse_games_buffer_start,browse_games_buffer_max_size);
+						}
+						has_done_a_switch = 0;
+					}
+					menu_arrow = set_arrow(menu_arrow,my_btn,browse_games_arrow);
+					if (menu_arrow < browse_games_buffer_start) {
+						browse_games_buffer_start -= browse_games_buffer_max_size;
+						browse_games_buffer_size = load_patchable_games(browse_games_buffer,browse_games_buffer_start,browse_games_buffer_max_size);
+					}
+					else if (menu_arrow > (browse_games_buffer_start + browse_games_buffer_max_size)-1) {
+						browse_games_buffer_start += browse_games_buffer_max_size;
+						browse_games_buffer_size = load_patchable_games(browse_games_buffer,browse_games_buffer_start,browse_games_buffer_max_size);
+					}
+					
 					break;
 
 			}
@@ -1254,7 +1420,7 @@ s32 main(s32 argc, const char* argv[])
             TINY3D_BLEND_RGB_FUNC_ADD | TINY3D_BLEND_ALPHA_FUNC_ADD);
 		
         drawScene(current_menu,menu_arrow,is_alive_toggle_thing,error_yet_to_press_ok,error_msg,yes_no_game_popup,
-		started_a_thread,&icon_0_main,&icon_0_main_index,saved_urls_txt_num,second_thread_args.normalise_digest); // Draw
+		started_a_thread,&icon_0_main,&icon_0_main_index,saved_urls_txt_num,second_thread_args.normalise_digest,browse_games_buffer,browse_games_buffer_size,browse_games_buffer_start,global_title_id); // Draw
 		is_alive_toggle_thing = !is_alive_toggle_thing;
 
         /* DRAWING FINISH HERE */
