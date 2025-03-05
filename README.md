@@ -87,8 +87,8 @@ checks every single usb port (for psnpatch)<br/>
 `/dev_usb004/exdata`<br/>
 `/dev_usb005/exdata`<br/><br/>
 then, if it still is not able to find a .rap file, it will look for the first `.rif` file inside of `/dev_hdd0/home/xxxxxxxx/exdata/` (using same method as above) then it will grab the `act.dat` file from the exdata folder, and will finally grab the idps from your ps3 using syscalls<br/><br/>
-if it cant find a .rif ethier, decryption will likely fail, although if youre able to boot the game, it ill most certainly be able to decrypt the eboot
-
+if it cant find a .rif ethier, decryption will likely fail, although if youre able to boot the game, it ill most certainly be able to decrypt the eboot.<br/><br/>
+if it fails to decrypt now, it will try to use unself to decrypt instead
 ## oscetool vs scetool
 [oscetool](https://github.com/spacemanspiff/oscetool) is a clone of scetool, it works almost the exact same way as scetool but the long options in the commands are broken, so although ill refer to long options here, in the app it uses the short options
 
@@ -145,3 +145,5 @@ then you can run the python script in python3 `python3 build.py` in order to bui
 ### the building blocks of the GUI, allowing to easily put text on the screen and navigate the menus
 ## [UnionPatcher](https://github.com/LBPUnion/UnionPatcher)
 ### For the idea of a patcher, and the oscetool commands for encryption and decryption
+## [unself fail0verflow-PS3-tools](https://github.com/daryl317/fail0verflow-PS3-tools)
+### for backup decrypt if the oscetool decrypt fails
