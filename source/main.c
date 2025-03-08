@@ -1035,7 +1035,7 @@ s32 main(s32 argc, const char* argv[])
 	char param_sfo_path[sizeof("/dev_hdd0/game/ABCD12345/PARAM.SFO")];
 	
 	u8 error_yet_to_press_ok = 0;
-	int exit_after_done = 0;
+	bool exit_after_done = 0;
 	char error_msg[1000];
 	char patch_method[200];
 	
