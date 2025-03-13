@@ -20,8 +20,8 @@ int main()
     char c_to_search[5] = "asdf";
 */
 bool strstr_with_nulls_in_it(const u8 *chunk_to_check, int text_size, const u8 *to_search, int c_to_search_size,
-bool (*further_patching)(int,int,const char*,FILE*,int),
-int buffer_start_offset, FILE *fp, const char *url,int biggest_possible_size
+bool (*further_patching)(int,int,const char*,FILE*,int,bool),
+int buffer_start_offset, FILE *fp, const char *url,int biggest_possible_size, bool respect_https
 )
 {
 	bool found_a_match = 0;
@@ -37,7 +37,7 @@ int buffer_start_offset, FILE *fp, const char *url,int biggest_possible_size
             if(pos_search == len_search)
             {
                 // match	
-				if (further_patching((pos_text-len_search)+1,buffer_start_offset,url,fp,biggest_possible_size)) {
+				if (further_patching((pos_text-len_search)+1,buffer_start_offset,url,fp,biggest_possible_size,respect_https)) {
 					found_a_match = 1;
 				}
                 
@@ -68,14 +68,19 @@ bool str_endswith( const char *s1, const char *s2 )
 }
 
 
-bool further_checking_after_found_http_str(int http_offset, int buffer_start_offset, const char *url, FILE *fp, int biggest_possible_size)
+bool further_checking_after_found_http_str(int http_offset, int buffer_start_offset, const char *url, FILE *fp, int biggest_possible_size,bool respect_https)
 {
 	char *null_fill;
 	char checking_value[BIGGEST_POSSIBLE_URL_IN_EBOOT_INCL_NULL];
 	int i;
 	int checking_value_size;
+	char https_checking_char;
+	char https_or_http_string[sizeof("https")];
+	const char * http_fresh_url;
 	
-	fseek(fp,buffer_start_offset+http_offset,SEEK_SET);
+	#define SEEK_TO_START_OF_HTTP fseek(fp,buffer_start_offset+http_offset,SEEK_SET)
+	
+	SEEK_TO_START_OF_HTTP;
 	
 	checking_value_size = fread(checking_value,1,BIGGEST_POSSIBLE_URL_IN_EBOOT_INCL_NULL,fp);
 	
@@ -100,27 +105,61 @@ bool further_checking_after_found_http_str(int http_offset, int buffer_start_off
 	last_occurance_of_null++;
 	
 	checking_value_size = strlen(checking_value);
-	// the lenght of the url is checked for in the main.c, but maybe this eboot doesnt support this long of url? - 1 for strlen not include null
-	if ((strlen(url) - 1) > last_occurance_of_null) {
+	// the lenght of the url is checked for in the main.c, but maybe this eboot doesnt support this long of url? - 1 for strlen not include null, plus 1 for https
+	if ((strlen(url) - 1) > last_occurance_of_null + 1) {
 		return 0;
 	}
 	// now we can treat checking_value like a normal string
-	if (str_endswith(checking_value,"/LITTLEBIGPLANETPS3_XML") || str_endswith(checking_value,"/LITTLEBIGPLANETPSP_XML")) {
-		fseek(fp,buffer_start_offset+http_offset,SEEK_SET);
+	if (!(str_endswith(checking_value,"/LITTLEBIGPLANETPS3_XML") || str_endswith(checking_value,"/LITTLEBIGPLANETPSP_XML"))) {
+		return 0;
+	}
+	
+	SEEK_TO_START_OF_HTTP;
+	
+	null_fill = malloc(last_occurance_of_null);
+	memset(null_fill,0,last_occurance_of_null);
+	
+	if (respect_https) {
+		fseek(fp,sizeof("http")-1,SEEK_CUR);
+		fread(&https_checking_char,1,1,fp);
+		if (https_checking_char == 's') {
+			if (strlen(url) < sizeof("https://s")) {
+				free(null_fill);
+				return 0;
+			}
+			http_fresh_url = url + sizeof("https")-1;
+			strcpy(https_or_http_string,"https");
+		}
+		else {
+			if (strlen(url) < sizeof("http://s")) {
+				free(null_fill);
+				return 0;
+			}
+			http_fresh_url = url + sizeof("http")-1;
+			strcpy(https_or_http_string,"http");
+		}
 		
-		null_fill = malloc(last_occurance_of_null);
-		memset(null_fill,0,last_occurance_of_null);
+		SEEK_TO_START_OF_HTTP;
+		fwrite(null_fill,1,last_occurance_of_null,fp);
+		free(null_fill);
+		SEEK_TO_START_OF_HTTP;
+		fwrite(https_or_http_string,1,strlen(https_or_http_string)-1,fp);
+		fwrite(http_fresh_url,1,strlen(http_fresh_url),fp);
+		
+		
+	}
+	else {
 		fwrite(null_fill,1,last_occurance_of_null,fp);
 		free(null_fill);
 		
-		fseek(fp,buffer_start_offset+http_offset,SEEK_SET);
+		SEEK_TO_START_OF_HTTP;
 		fwrite(url,1,strlen(url),fp);
-		return 1;
 	}
-	return 0;
+	return 1;
+
 }
 
-bool further_patching_for_digest(int digest_offset, int buffer_start_offset, const char *digest, FILE *fp, int biggest_possible_size)
+bool further_patching_for_digest(int digest_offset, int buffer_start_offset, const char *digest, FILE *fp, int biggest_possible_size,bool respect_https)
 {
 	char *null_fill;
 	char checking_value[biggest_possible_size];
@@ -171,7 +210,7 @@ bool further_patching_for_digest(int digest_offset, int buffer_start_offset, con
 }
 
 
-int patch_eboot_elf_main_series(const char *eboot_elf_path, const char *url, const char *digest, bool normalise_digest)
+int internal_patch_eboot_elf_main_series(const char *eboot_elf_path, const char *url, const char *digest, bool normalise_digest, bool respect_https)
 {
 	u8 searching_buffer[SEARCHING_BUFFER_SIZE + BIGGEST_POSSIBLE_URL_IN_EBOOT_INCL_NULL];
 	
@@ -213,7 +252,8 @@ int patch_eboot_elf_main_series(const char *eboot_elf_path, const char *url, con
 									buffer_start_offset,
 									fp,
 									url,
-									BIGGEST_POSSIBLE_URL_IN_EBOOT_INCL_NULL)) {found_a_match = 1;}
+									BIGGEST_POSSIBLE_URL_IN_EBOOT_INCL_NULL,
+									respect_https)) {found_a_match = 1;}
 	}
 	fclose(fp);
 	
@@ -269,7 +309,7 @@ int patch_eboot_elf_main_series(const char *eboot_elf_path, const char *url, con
 										buffer_start_offset,
 										fp_for_digest,
 										todo_digest,
-										BIGGEST_POSSIBLE_DIGEST_IN_EBOOT_INCL_NULL)){found_a_match = 1;}
+										BIGGEST_POSSIBLE_DIGEST_IN_EBOOT_INCL_NULL,0)){found_a_match = 1;}
 		}
 		fclose(fp_for_digest);
 		
@@ -283,6 +323,16 @@ int patch_eboot_elf_main_series(const char *eboot_elf_path, const char *url, con
 	}
 
 	return 0;
+}
+
+int patch_eboot_elf_main_series(const char *eboot_elf_path, const char *url, const char *digest, bool normalise_digest)
+{
+	return internal_patch_eboot_elf_main_series(eboot_elf_path,url,digest,normalise_digest,0);
+}
+
+int patch_eboot_elf_vita_cross_controller_app(const char *eboot_elf_path, const char *url, const char *digest, bool normalise_digest)
+{
+	return internal_patch_eboot_elf_main_series(eboot_elf_path,url,digest,normalise_digest,1);
 }
 
 int patch_eboot_elf_karting(const char *eboot_elf_path, const char *url, const char *digest, bool normalise_digest)
@@ -321,7 +371,7 @@ int patch_eboot_elf_karting(const char *eboot_elf_path, const char *url, const c
 									buffer_start_offset,
 									fp,
 									url,
-									BIGGEST_POSSIBLE_URL_IN_LBPK_EBOOT_INCL_NULL)){found_a_match = 1;}
+									BIGGEST_POSSIBLE_URL_IN_LBPK_EBOOT_INCL_NULL,0)){found_a_match = 1;}
 	}
 	fclose(fp);
 	
