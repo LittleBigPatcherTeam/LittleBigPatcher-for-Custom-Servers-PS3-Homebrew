@@ -1153,13 +1153,11 @@ s32 main(s32 argc, const char* argv[])
 							case YES_NO_GAME_POPUP_REVERT_EBOOT:
 								strcpy(second_thread_args.title_id,global_title_id);
 								sysThreadCreate(&second_thread_id,revert_eboot_thread,(void *)&second_thread_args,SECOND_THREAD_PRIORITY,SECOND_THREAD_STACK_SIZE,THREAD_JOINABLE,SECOND_THREAD_NAME);
-								second_thread_args.has_finished = 0;
 								started_a_thread = YES_NO_GAME_POPUP_REVERT_EBOOT;
 								break;
 							case YES_NO_GAME_POPUP_PATCH_GAME:
 								strcpy(second_thread_args.title_id,global_title_id);
 								sysThreadCreate(&second_thread_id,patch_eboot_thread,(void *)&second_thread_args,SECOND_THREAD_PRIORITY,SECOND_THREAD_STACK_SIZE,THREAD_JOINABLE,SECOND_THREAD_NAME);
-								second_thread_args.has_finished = 0;
 								started_a_thread = YES_NO_GAME_POPUP_PATCH_GAME;
 								break;
 							default:
