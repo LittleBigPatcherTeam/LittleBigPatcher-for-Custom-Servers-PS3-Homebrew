@@ -7,6 +7,9 @@
 ![ICON0.PNG](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/blob/main/ICON0.PNG?raw=true)<br/>
 A simple way to patch your LittleBigPlanet games to connect to custom servers with only your PS3!
 
+# source code
+https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew
+
 # Table of contents
 - [Features and FAQ](#section-id-8)
   - [works on both PS3 and RPCS3](#section-id-9)
