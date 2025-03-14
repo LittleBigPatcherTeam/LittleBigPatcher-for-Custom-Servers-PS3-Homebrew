@@ -1,3 +1,6 @@
+---
+title: LittleBigPatcher for Custom Servers (PS3 Homebrew)
+---
 <div id='section-id-1'/>
 
 # LittleBigPatcher for Custom Servers (PS3 Homebrew)
