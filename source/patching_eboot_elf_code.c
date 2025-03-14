@@ -12,6 +12,8 @@ typedef unsigned char u8; */
 // any other digests shall be added here for refresh or normalise_digest
 const char replace_digests[4][MAX_DIGEST_LEN_INCL_NULL] = {"!?/*hjk7duOZ1f@daX","$ghj3rLl2e5E28@~[!","9yF*A&L#5i3q@9|&*F","CustomServerDigest"};
 
+// cross controller needs this to be patched out with a domain
+const u8 lbp_vita_url_for_cross_controller[sizeof("lbpvita.online.scee.com")-1] = "lbpvita.online.scee.com";
 
 /*https://stackoverflow.com/questions/13450809/how-to-search-a-string-in-a-char-array-in-c
 #include <stdio.h>
@@ -127,23 +129,38 @@ bool further_checking_after_found_http_str(int http_offset, int buffer_start_off
 				free(null_fill);
 				return 0;
 			}
-			http_fresh_url = url + sizeof("https")-1;
+			
 			strcpy(https_or_http_string,"https");
 		}
-		else {
+		else if (https_checking_char == ':') {
 			if (strlen(url) < sizeof("http://s")) {
 				free(null_fill);
 				return 0;
 			}
-			http_fresh_url = url + sizeof("http")-1;
 			strcpy(https_or_http_string,"http");
 		}
-		
+		else {
+			free(null_fill);
+			return 0;
+		}
+
+
+		if (url[sizeof("http")-1] == 's') {
+			http_fresh_url = url + (sizeof("https")-1);
+		}
+		else if (url[sizeof("http")-1] == ':') {
+			http_fresh_url = url + (sizeof("http")-1);
+		}
+		else {
+			free(null_fill);
+			return 0;
+		}
+
 		SEEK_TO_START_OF_HTTP;
 		fwrite(null_fill,1,last_occurance_of_null,fp);
 		free(null_fill);
 		SEEK_TO_START_OF_HTTP;
-		fwrite(https_or_http_string,1,strlen(https_or_http_string)-1,fp);
+		fwrite(https_or_http_string,1,strlen(https_or_http_string),fp);
 		fwrite(http_fresh_url,1,strlen(http_fresh_url),fp);
 		
 		
@@ -210,7 +227,7 @@ bool further_patching_for_digest(int digest_offset, int buffer_start_offset, con
 }
 
 
-int internal_patch_eboot_elf_main_series(const char *eboot_elf_path, const char *url, const char *digest, bool normalise_digest, bool respect_https)
+int internal_patch_eboot_elf_main_series(const char *eboot_elf_path, const char *url, const char *digest, bool normalise_digest, bool respect_https, bool lbp_vita_loose_domain_for_cross_controller_app)
 {
 	u8 searching_buffer[SEARCHING_BUFFER_SIZE + BIGGEST_POSSIBLE_URL_IN_EBOOT_INCL_NULL];
 	
@@ -220,7 +237,8 @@ int internal_patch_eboot_elf_main_series(const char *eboot_elf_path, const char 
 	int full_buffer_trailing_buffer_size;
 	bool found_a_match;
 	char todo_digest[MAX_DIGEST_LEN_INCL_NULL] = {0};
-	
+	char * url_domain;
+
 	FILE *fp = fopen(eboot_elf_path,"rb+");
 	if (fp == 0) {
 		return PATCH_ERR_EBOOT_ELF_NO_EXISTS;
@@ -314,25 +332,87 @@ int internal_patch_eboot_elf_main_series(const char *eboot_elf_path, const char 
 		fclose(fp_for_digest);
 		
 		if (found_a_match) {
-			return 0; // there wont be mutiple digests in a eboot
+			break; // there wont be mutiple digests in a eboot
 		}
 	}
 
-	if (todo_digest[0] != 0) {
+	if (todo_digest[0] != 0 && !found_a_match) {
 		return PATCH_ERR_NO_DIGESTS_FOUND;
 	}
 
-	return 0;
+	if (!lbp_vita_loose_domain_for_cross_controller_app) {
+		return 0;
+	}
+
+	if (strlen(url) < sizeof("https://s")) {
+		return PATCH_ERR_NO_URLS_FOUND;
+	}
+
+	url_domain = malloc(strlen(url) - (sizeof("http://")-1));
+
+	if (url[sizeof("http")-1] == 's') {
+		strcpy(url_domain,url + (sizeof("https://")-1));
+	}
+	else if (url[sizeof("http")-1] == ':') {
+		strcpy(url_domain,url + (sizeof("http://")-1));
+	}
+	else {
+		free(url_domain);
+		return PATCH_ERR_NO_URLS_FOUND;
+	}
+
+	url_domain[strcspn(url_domain, "/")] = 0;
+	if (!url_domain[0]){
+		free(url_domain);
+		return PATCH_ERR_NO_URLS_FOUND;
+	}
+
+	// anyone wanna rename the variables and comments to match the lbp vita url, be my guest
+	found_a_match = 0;
+	FILE *fp_for_digest = fopen(eboot_elf_path,"rb+");
+	if (fp_for_digest == 0) {
+		return PATCH_ERR_EBOOT_ELF_NO_EXISTS;
+	}
+	while ((buffer_size = fread(searching_buffer_for_digest,1,SEARCHING_BUFFER_SIZE,fp_for_digest)) > 0) {
+		buffer_start_offset = ftell(fp_for_digest) - buffer_size;
+		
+		// reads extra data after the inital chunk read, so that it will find urls overlaping in the chunk sizes
+		trailing_buffer_size = fread(searching_buffer_for_digest+buffer_size,1,BIGGEST_POSSIBLE_URL_IN_EBOOT_INCL_NULL,fp_for_digest);	
+		
+		// seeks backwards so the next chunk will include this
+		fseek(fp_for_digest,-trailing_buffer_size,SEEK_CUR);
+		
+		// calcing the actual buffer size
+		full_buffer_trailing_buffer_size = buffer_size + trailing_buffer_size;
+
+		if (strstr_with_nulls_in_it(searching_buffer_for_digest,
+									full_buffer_trailing_buffer_size,
+									lbp_vita_url_for_cross_controller,
+									sizeof(lbp_vita_url_for_cross_controller),
+									further_patching_for_digest,
+									buffer_start_offset,
+									fp_for_digest,
+									url_domain,
+									BIGGEST_POSSIBLE_URL_IN_EBOOT_INCL_NULL,0)){found_a_match = 1;}
+	}
+	fclose(fp_for_digest);
+	
+	if (found_a_match) {
+		return 0;
+	}
+
+	return PATCH_ERR_NO_URLS_FOUND;
+
 }
 
 int patch_eboot_elf_main_series(const char *eboot_elf_path, const char *url, const char *digest, bool normalise_digest)
 {
-	return internal_patch_eboot_elf_main_series(eboot_elf_path,url,digest,normalise_digest,0);
+	return internal_patch_eboot_elf_main_series(eboot_elf_path,url,digest,normalise_digest,0,0);
 }
 
 int patch_eboot_elf_vita_cross_controller_app(const char *eboot_elf_path, const char *url, const char *digest, bool normalise_digest)
 {
-	return internal_patch_eboot_elf_main_series(eboot_elf_path,url,digest,normalise_digest,1);
+	return internal_patch_eboot_elf_main_series(eboot_elf_path,url,digest,normalise_digest,1,1);
 }
 
 int patch_eboot_elf_karting(const char *eboot_elf_path, const char *url, const char *digest, bool normalise_digest)
@@ -379,5 +459,5 @@ int patch_eboot_elf_karting(const char *eboot_elf_path, const char *url, const c
 		return 0;
 	}
 	
-	return PATCH_ERR_NO_DIGESTS_FOUND;
+	return PATCH_ERR_NO_URLS_FOUND;
 }
