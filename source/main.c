@@ -72,6 +72,15 @@
 #define THREAD_RET_EBOOT_PATCHED 6
 #define THREAD_RET_EBOOT_BACKUP_FAILED 7
 
+#define THREAD_CURRENT_STATE_CLEANING_WORKSPACE 1
+#define THREAD_CURRENT_STATE_MAKING_EBOOT_BIN_BAK 2
+#define THREAD_CURRENT_STATE_RESTORING_EBOOT_BIN_BAK 3
+#define THREAD_CURRENT_STATE_DECRYPTING_EBOOT_BIN 4
+#define THREAD_CURRENT_STATE_UNSELF_EBOOT_BIN 5
+#define THREAD_CURRENT_STATE_START_PATCHING 6
+#define THREAD_CURRENT_STATE_DONE_PATCHING 7
+#define THREAD_CURRENT_ENCRYPTING_FOR_DIGITAL 8
+#define THREAD_CURRENT_ENCRYPTING_FOR_DISC 9
 
 #define MENU_MAIN 0
 #define MENU_MAIN_ARROW 4-1
@@ -220,7 +229,7 @@ void draw_png(pngData *texture_input, int img_index, int x_coord, int y_coord) {
 	DrawSprites2D(x_coord, y_coord, 1, texture_input->width, texture_input->height, 0xffffffff);
 }
 
-void drawScene(u8 current_menu,int menu_arrow, bool is_alive_toggle_thing, u8 error_yet_to_press_ok, char* error_msg, int yes_no_game_popup, int started_a_thread,
+void drawScene(u8 current_menu,int menu_arrow, bool is_alive_toggle_thing, u8 error_yet_to_press_ok, char* error_msg, int yes_no_game_popup, int started_a_thread, int thread_current_state,
 pngData *texture_input, int * img_index, u8 saved_urls_txt_num, bool normalise_digest_checked, struct TitleIdAndGameName browse_games_buffer[], u32 browse_games_buffer_size, u32 browse_games_buffer_start,char * global_title_id
 )
 {
@@ -263,6 +272,56 @@ pngData *texture_input, int * img_index, u8 saved_urls_txt_num, bool normalise_d
 				break;
 			case YES_NO_GAME_POPUP_PATCH_GAME:
 				DrawFormatString(x,y,"Applying patches to your game. Please wait...");
+				y += CHARACTER_HEIGHT;
+				bg_colour = TITLE_BG_COLOUR;
+				SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
+
+				bg_colour = (thread_current_state == THREAD_CURRENT_STATE_CLEANING_WORKSPACE) ? SELECTED_FONT_BG_COLOUR : TITLE_BG_COLOUR;
+				SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
+				DrawString(x, y, "Cleaning workspace");
+				y += CHARACTER_HEIGHT;
+
+				bg_colour = (thread_current_state == THREAD_CURRENT_STATE_MAKING_EBOOT_BIN_BAK) ? SELECTED_FONT_BG_COLOUR : TITLE_BG_COLOUR;
+				SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
+				DrawString(x, y, "Making a backup of EBOOT.BIN since no EBOOT.BIN.BAK was found");
+				y += CHARACTER_HEIGHT;
+
+				bg_colour = (thread_current_state == THREAD_CURRENT_STATE_RESTORING_EBOOT_BIN_BAK) ? SELECTED_FONT_BG_COLOUR : TITLE_BG_COLOUR;
+				SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
+				DrawString(x, y, "Restoring EBOOT.BIN.BAK file");
+				y += CHARACTER_HEIGHT;
+
+				bg_colour = (thread_current_state == THREAD_CURRENT_STATE_DECRYPTING_EBOOT_BIN) ? SELECTED_FONT_BG_COLOUR : TITLE_BG_COLOUR;
+				SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
+				DrawString(x, y, "Decrypting EBOOT.BIN file to workspace");
+				y += CHARACTER_HEIGHT;
+
+				bg_colour = (thread_current_state == THREAD_CURRENT_STATE_UNSELF_EBOOT_BIN) ? SELECTED_FONT_BG_COLOUR : TITLE_BG_COLOUR;
+				SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
+				DrawString(x, y, "Decrypt failed, unself EBOOT.BIN file to workspace");
+				y += CHARACTER_HEIGHT;
+
+				bg_colour = (thread_current_state == THREAD_CURRENT_STATE_START_PATCHING) ? SELECTED_FONT_BG_COLOUR : TITLE_BG_COLOUR;
+				SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
+				DrawString(x, y, "Start patching EBOOT.BIN.ELF");
+				y += CHARACTER_HEIGHT;
+
+				bg_colour = (thread_current_state == THREAD_CURRENT_STATE_DONE_PATCHING) ? SELECTED_FONT_BG_COLOUR : TITLE_BG_COLOUR;
+				SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
+				DrawString(x, y, "Done patching");
+				y += CHARACTER_HEIGHT;
+
+				bg_colour = (thread_current_state == THREAD_CURRENT_ENCRYPTING_FOR_DIGITAL) ? SELECTED_FONT_BG_COLOUR : TITLE_BG_COLOUR;
+				SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
+				DrawString(x, y, "Encrypting EBOOT.BIN as Digital");
+				y += CHARACTER_HEIGHT;
+
+				bg_colour = (thread_current_state == THREAD_CURRENT_ENCRYPTING_FOR_DISC) ? SELECTED_FONT_BG_COLOUR : TITLE_BG_COLOUR;
+				SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
+				DrawString(x, y, "Encrypting EBOOT.BIN as Disc update");
+				y += CHARACTER_HEIGHT;
+
+				
 				break;
 		}
 		return;
@@ -809,6 +868,7 @@ void patch_eboot_thread(void *arg)
 	struct SecondThreadArgs *args = arg;
 	struct UrlToPatchTo my_url = saved_urls[selected_url_index];
 	
+	args->current_state = THREAD_CURRENT_STATE_CLEANING_WORKSPACE;
 	mkdir(WORKING_DIR, 0777);
 	remove(WORKING_DIR "EBOOT.ELF");
 
@@ -823,6 +883,7 @@ void patch_eboot_thread(void *arg)
 	
 	// only backup eboot if eboot.bin.bak dont exist
 	if ((!does_file_exist(dst_file)) && (!does_file_exist(dst_file_refresh_orig))) {
+		args->current_state = THREAD_CURRENT_STATE_MAKING_EBOOT_BIN_BAK;
 		dbglogger_log("No EBOOT.BIN.BAK was found, so making one");
 		copy_file_res = copy_file(dst_file,src_file);
 		
@@ -832,6 +893,7 @@ void patch_eboot_thread(void *arg)
 		}
 	}
 	else {
+		args->current_state = THREAD_CURRENT_STATE_RESTORING_EBOOT_BIN_BAK;
 		dbglogger_log("Restoring from EBOOT.BIN.BAK file");
 		copy_file_res = revert_eboot(args->title_id);
 		if (copy_file_res == -1) {
@@ -853,13 +915,14 @@ void patch_eboot_thread(void *arg)
 	
 	char *argv_for_dec[] = { tmp_arg1_for_dec, tmp_arg2_for_dec, tmp_arg3_for_dec, out_and_in_bin, out_and_in_elf, NULL };
 	
-
+	args->current_state = THREAD_CURRENT_STATE_DECRYPTING_EBOOT_BIN;
 	run_scetool(5,argv_for_dec);
 	
 	if (!does_file_exist(WORKING_DIR "EBOOT.ELF")) {
 		dbglogger_log("oscetool decrypt failed, trying unself");
 		// dont give up just yet!
 		char *argv_for_unself[] = {"L",out_and_in_bin,WORKING_DIR "EBOOT.ELF", NULL};
+		args->current_state = THREAD_CURRENT_STATE_UNSELF_EBOOT_BIN;
 		unself_main(3,argv_for_unself);
 		
 		
@@ -869,9 +932,10 @@ void patch_eboot_thread(void *arg)
 		}
 		global_is_digital_eboot = 1;
 	}
-	
+	args->current_state = THREAD_CURRENT_STATE_START_PATCHING;
 	dbglogger_log("start patching");
 	patch_res = args->patch_func(WORKING_DIR "EBOOT.ELF",my_url.url,my_url.digest,args->normalise_digest);
+	args->current_state = THREAD_CURRENT_STATE_DONE_PATCHING;
 	dbglogger_log("done patching");
 	
 	if (patch_res != 0 ) {
@@ -886,6 +950,7 @@ void patch_eboot_thread(void *arg)
 	remove(out_bin); // remove the old EBOOT.BIN to ensure that it actually encrypted the file
 	// some of the args in argv is not getting loaded, refer to oscetool_main.c for more info
 	if (global_is_digital_eboot) {
+		args->current_state = THREAD_CURRENT_ENCRYPTING_FOR_DIGITAL;
 		dbglogger_log("Encrypting for digital");
 		char tmp_arg1_for_enc[] = "L";
 		char tmp_arg2_for_enc[] = "-v";
@@ -937,6 +1002,7 @@ void patch_eboot_thread(void *arg)
 		run_scetool(19+2,argv_for_enc);
 	}
 	else {
+		args->current_state = THREAD_CURRENT_ENCRYPTING_FOR_DISC;
 		dbglogger_log("Encrypting for disc");
 		char tmp_arg1_for_disc_enc[] = "L";
 		char tmp_arg2_for_disc_enc[] = "-v";
@@ -990,6 +1056,7 @@ s32 main(s32 argc, const char* argv[])
 {
 	// init the global second_thread_args
 	second_thread_args.has_finished = 0;
+	second_thread_args.current_state = 0;
 	second_thread_args.normalise_digest = 1;
 	second_thread_args.patch_func = &patch_eboot_elf_main_series;
 	second_thread_args.title_id[0] = 0;
@@ -1430,7 +1497,7 @@ s32 main(s32 argc, const char* argv[])
             TINY3D_BLEND_RGB_FUNC_ADD | TINY3D_BLEND_ALPHA_FUNC_ADD);
 		
         drawScene(current_menu,menu_arrow,is_alive_toggle_thing,error_yet_to_press_ok,error_msg,yes_no_game_popup,
-		started_a_thread,&icon_0_main,&icon_0_main_index,saved_urls_txt_num,second_thread_args.normalise_digest,browse_games_buffer,browse_games_buffer_size,browse_games_buffer_start,global_title_id); // Draw
+		started_a_thread,second_thread_args.current_state,&icon_0_main,&icon_0_main_index,saved_urls_txt_num,second_thread_args.normalise_digest,browse_games_buffer,browse_games_buffer_size,browse_games_buffer_start,global_title_id); // Draw
 		is_alive_toggle_thing = !is_alive_toggle_thing;
 
         /* DRAWING FINISH HERE */

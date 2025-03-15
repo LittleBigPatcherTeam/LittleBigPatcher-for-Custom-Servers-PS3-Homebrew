@@ -8,6 +8,7 @@ bool does_file_exist(char * filename);
 
 struct SecondThreadArgs {
     bool has_finished;
+	int current_state;
 	bool normalise_digest;
 	u64 idps[2];
 	PATCH_EBOOT_FUNC_SIGNATURE(patch_func);
