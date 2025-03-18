@@ -12,8 +12,8 @@ A simple way to patch your LittleBigPlanet games to connect to custom servers wi
 
 # source code
 [https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew)
-# Releases (.pkg downloads)
-[https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/releases](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/releases)
+# Latest release (.pkg download)
+[http://bit.ly/patchps3](http://bit.ly/patchps3)
 
 # Table of contents
 - [Features and FAQ](#section-id-8)
