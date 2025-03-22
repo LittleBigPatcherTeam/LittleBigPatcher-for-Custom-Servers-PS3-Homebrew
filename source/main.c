@@ -965,7 +965,7 @@ void patch_eboot_thread(void *arg)
 	lua_pushboolean(L,args->normalise_digest);
 	lua_pushstring(L,WORKING_DIR);
 	
-    if (lua_pcall(L, 4, 1, 0) != LUA_OK) {
+    if (lua_pcall(L, 5, 1, 0) != LUA_OK) {
         dbglogger_log("Error calling function: %s", lua_tostring(L, -1));
 		args->has_finished = 1;
 		sysThreadExit(THREAD_RET_EBOOT_PATCH_FAILED);
