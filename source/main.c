@@ -1191,6 +1191,9 @@ s32 main(s32 argc, const char* argv[])
 		if (strncmp(func_name,"patch_",strlen("patch_")) != 0) {
 			goto lua_pop_continue;
 		}
+		if (strncmp(func_name,"patch_vita",strlen("patch_vita")) == 0) {
+			goto lua_pop_continue;
+		}
 		// dont accept `patch_` named things
 		fun_name_len = strlen(func_name);
 		if (fun_name_len == strlen("patch_")) {
