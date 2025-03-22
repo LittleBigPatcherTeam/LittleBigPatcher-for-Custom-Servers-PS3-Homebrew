@@ -255,7 +255,7 @@ Here's an example patch method entry in `patch.lua` that just does nothing (the 
 ```lua
 patch_method_vita_tearaway = "Tearaway vita"
 ---@param eboot_elf_path string The path to the eboot.elf file which is ready to be patched
----@param url string The user entered url, it wont have a trailing null character, you should patch to this
+---@param url string The user entered url, it wont have a trailing null character, you should patch to this. if you need you can do stuff like just get the domain and port from a url
 ---@param digest string Same as url but for digest, most games you can ignore this, or maybe use it as something else, eg perhaps custom warning text? will be empty string if not provided
 ---@param normalise_digest boolean This you can most certainly ingnore, but you can always utlise it for something else, as an optinal boolean, false if uchecked, true if checked
 ---@param working_dir string Place to put files if you need to, but you likely wont
@@ -298,7 +298,7 @@ end
 
 patch_method_vita_tearaway = "Tearaway vita"
 ---@param eboot_elf_path string The path to the eboot.elf file which is ready to be patched
----@param url string The user entered url, it wont have a trailing null character, you should patch to this
+---@param url string The user entered url, it wont have a trailing null character, you should patch to this. if you need you can do stuff like just get the domain and port from a url
 ---@param digest string Same as url but for digest, most games you can ignore this, or maybe use it as something else, eg perhaps custom warning text? will be empty string if not provided
 ---@param normalise_digest boolean This you can most certainly ingnore, but you can always utlise it for something else, as an optinal boolean, false if uchecked, true if checked
 ---@param working_dir string Place to put files if you need to, but you likely wont
