@@ -260,7 +260,7 @@ int method_count, struct LuaPatchDetails patch_lua_names[]
     SetFontColor(TITLE_FONT_COLOUR,TITLE_BG_COLOUR);
 	x= 0.0; y = 0.0;
 	
-	DrawFormatString(START_X_FOR_PRESS_TO_REFRESH_THINGS_TEXT,y,"P%dss "MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_TRIANGLE_BTN" to refresh things if ->%d<- is a solid 1 or 0, app is frozen " VERSION_NUM_STR,menu_arrow,is_alive_toggle_thing);
+	DrawFormatString(START_X_FOR_PRESS_TO_REFRESH_THINGS_TEXT,y,"Press "MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_TRIANGLE_BTN" to refresh things if ->%d<- is a solid 1 or 0, app is frozen " VERSION_NUM_STR,is_alive_toggle_thing);
 
 
 
