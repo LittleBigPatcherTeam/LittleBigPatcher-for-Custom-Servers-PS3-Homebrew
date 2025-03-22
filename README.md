@@ -279,7 +279,7 @@ If you're using HxD, look near the bottom of the HxD window, for `Length(h): ` a
 here, we can see its `Length(h): 14`, so our number will be `0x14` (if it says `Length(d): 20` then the number will be `20` instead)
 
 ## Adding in the patch
-Open up patch.lua in an editor and go to the bottom to add in your number, like so (give a descriptive name)
+Open up patch.lua in an editor and go to the bottom to add in your number, like so (give a descriptive name) (there is no harm in having a bigger number, but do not make it smaller than any of the urls with the null bytes in the eboot, make it bigger to be safe)
 ```lua
 BIGGEST_POSSIBLE_URL_IN_TEARAWAY_VITA_EBOOT_INCL_NULL = 0x14
 ```
