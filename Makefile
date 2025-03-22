@@ -26,10 +26,13 @@ SCETOOL_FLAGS	+=
 # BUILD is the directory where object files & intermediate files will be placed
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
+
+# i had to edit the source/lua-5.4.7/src a bit, rename the main functions in lua.c and luac.c
+# from https://www.lua.org/ftp/lua-5.4.7.tar.gz
 #---------------------------------------------------------------------------------
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	source source/fail0verflow_PS3_tools
+SOURCES		:=	source source/fail0verflow_PS3_tools source/lua-5.4.7/src
 DATA		:=	data
 SHADERS		:=	shaders
 INCLUDES	:=	include
@@ -128,6 +131,7 @@ $(BUILD):
 	# my_edits this puts the data files needed by oscetool in USRDIR
 	mkdir -p $(CURDIR)/$(BUILD)/pkg/USRDIR
 	cp $(CURDIR)/colours_config.txt $(CURDIR)/$(BUILD)/pkg/USRDIR
+	cp $(CURDIR)/patch.lua $(CURDIR)/$(BUILD)/pkg/USRDIR
 	cp -r $(CURDIR)/oscetool_data $(CURDIR)/$(BUILD)/pkg/USRDIR
 
 #---------------------------------------------------------------------------------
