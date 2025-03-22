@@ -877,7 +877,6 @@ void revert_eboot_thread(void *arg)
 
 void patch_eboot_thread(void *arg) 
 {
-	int patch_res = 0;
 	struct SecondThreadArgs *args = arg;
 	struct UrlToPatchTo my_url = saved_urls[selected_url_index];
 	
@@ -970,23 +969,10 @@ void patch_eboot_thread(void *arg)
 		args->has_finished = 1;
 		sysThreadExit(THREAD_RET_EBOOT_PATCH_FAILED);
     }
-	if (lua_isnumber(L, -1)) {
-		// assumes that it just returns a normal int, which is should
-		patch_res = (int)lua_tonumber(L, -1);
-	}
-	else {
-		dbglogger_log("Returend not a number");
-		args->has_finished = 1;
-		sysThreadExit(THREAD_RET_EBOOT_PATCH_FAILED);
-	}
+	// its now assumed that if patching went wrong, the lua code will throw an error
 
 	args->current_state = THREAD_CURRENT_STATE_DONE_PATCHING;
 	dbglogger_log("done patching");
-	
-	if (patch_res != 0 ) {
-		args->has_finished = 1;
-		sysThreadExit(THREAD_RET_EBOOT_PATCH_FAILED);
-	}
 	char input_elf_to_be_enc[] = WORKING_DIR "EBOOT.ELF";
 	
 	char out_bin[sizeof("/dev_hdd0/game/ABCD12345/USRDIR/EBOOT.BIN")];
