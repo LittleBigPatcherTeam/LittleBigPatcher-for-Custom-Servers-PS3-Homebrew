@@ -42,6 +42,7 @@ A simple way to patch your LittleBigPlanet games to connect to custom servers wi
   - [Encryption oscetool command (digital)](#section-id-107)
   - [Patching method for main series](#section-id-113)
   - [Patching method for LittleBigPlanet Karting](#section-id-131)
+- [Adding your own patch method, or editing the exsiting ones (only using lua, no c or compiler needed)](#using-the-lua-api)
 - [Building](#section-id-134)
 - [Credits (If i missed anyone please let me know)](#section-id-139)
 
@@ -241,6 +242,100 @@ it first looks through the eboot.elf to find any `http` strings, if it finds any
 ## Patching method for LittleBigPlanet Karting
 it will look for the string `lbpk.ps3.online.scea.com\0`, basically the same as above just find the lbp k url string instead of http, and skip step 2
 
+<div id='using-the-lua-api'/>
+
+# Adding your own patch method, or editing the exsiting ones (only using lua, no c or compiler needed)
+If you will like to edit the patching code, or add your own patching method then you can edit the `patch.lua` file!<br/>
+You will find this file in
+`ux0:/app/LBPC59548/` on vita, `/dev_hdd0/game/LBPCSPPHB/USRDIR/` on ps3. You can edit this file freely, although i highly reccomend to do most of your testing on your dev machine using the game's EBOOT.ELF (or `eboot.bin.elf` on vita), and to do final testing, upload it to the folder whichever device youre using and reboot the app.
+
+## How the app finds methods?
+the app will run the lua file on boot, then it looks for functions starting with `patch_`, this is  the function that will get called during the pach process. It will also look for global strings starting with `patch_method_`, this is to show in the `Patch games` menu. please note that that each `patch_` function needs a global `patch_method_` string, otherwise the app will quit upon boot.<br/><br/>
+Here's an example patch method entry in `patch.lua` that just does nothing (the type comments are not required)
+```lua
+patch_method_vita_tearaway = "Tearaway vita"
+---@param eboot_elf_path string The path to the eboot.elf file which is ready to be patched
+---@param url string The user entered url, it wont have a trailing null character, you should patch to this
+---@param digest string Same as url but for digest, most games you can ignore this, or maybe use it as something else, eg perhaps custom warning text? will be empty string if not provided
+---@param normalise_digest boolean This you can most certainly ingnore, but you can always utlise it for something else, as an optinal boolean, false if uchecked, true if checked
+---@param working_dir string Place to put files if you need to, but you likely wont
+---@return boolean Does not matter, if something goes wrong during patching, you should `error("something went wrong")`, try to make sure you close the eboot file.
+function patch_vita_tearaway(eboot_elf_path, url, digest, normalise_digest, working_dir)
+
+end
+```
+(if the function starts with `patch_method_vita` it won't show on ps3, and `patch_method_ps3` wont show on vita, otherwise will show on both systems)<br/>
+If you know what you're doing now, feel free to add in a new patch method now, but if you would like some more help...
+
+## Making a basic patch
+Lets make a patch method for Tearaway on the vita, we would like to patch in a url to replace `tearaway.me:10090`, first we need to find the in eboot.bin.elf url size, so if you're using HxD, open up the `eboot.bin.elf` (or `EBOOT.ELF` on ps3) on HxD
+### Finding the url size
+If we search for `tearaway.me:10090` in eboot.bin.elf, we can find this
+![idk](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/blob/main/screenshots_for_readme/tearaway_basic_search_hxd.PNG?raw=true)<br/>
+If you pay attention on the hex editor side, you should notice some `00` bytes after the url (theese are called null bytes or null characters), what you want to do is select that url, plus all of the null bytes to the right of it, stopping when you reach the first non `00` byte, like so
+![idk](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/blob/main/screenshots_for_readme/tearaway_select_null_bytes.png?raw=true)<br/>
+If you're using HxD, look near the bottom of the HxD window, for `Length(h): ` and you want to take note of the number
+![idk](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/blob/main/screenshots_for_readme/tearaway_highligh_url_len_hex.PNG?raw=true)<br/>
+here, we can see its `Length(h): 14`, so our number will be `0x14` (if it says `Length(d): 20` then the number will be `20` instead)
+
+## Adding in the patch
+Open up patch.lua in an editor and go to the bottom to add in your number, like so (give a descriptive name)
+```lua
+BIGGEST_POSSIBLE_URL_IN_TEARAWAY_VITA_EBOOT_INCL_NULL = 0x14
+```
+now here is the boiler plate code
+```lua
+BIGGEST_POSSIBLE_URL_IN_TEARAWAY_VITA_EBOOT_INCL_NULL = 0x14
+
+---@param offset integer
+---@param file file
+---@param url string
+---@param respect_https boolean
+---@return boolean
+function tearaway_patch(offset, file, url, respect_https)
+	return basic_replace(offset, file, url, BIGGEST_POSSIBLE_URL_IN_TEARAWAY_VITA_EBOOT_INCL_NULL, "url")
+end
+
+patch_method_vita_tearaway = "Tearaway vita"
+---@param eboot_elf_path string The path to the eboot.elf file which is ready to be patched
+---@param url string The user entered url, it wont have a trailing null character, you should patch to this
+---@param digest string Same as url but for digest, most games you can ignore this, or maybe use it as something else, eg perhaps custom warning text? will be empty string if not provided
+---@param normalise_digest boolean This you can most certainly ingnore, but you can always utlise it for something else, as an optinal boolean, false if uchecked, true if checked
+---@param working_dir string Place to put files if you need to, but you likely wont
+---@return boolean Does not matter, if something goes wrong during patching, you should `error("something went wrong")`, try to make sure you close the eboot file.
+function patch_vita_tearaway(eboot_elf_path, url, digest, normalise_digest, working_dir)
+	---@type (BasePatchInstruction)[]
+	local patches_list = {}
+	local base_patch_instruction = BasePatchInstruction:new(nil, url .. "\x00", tearaway_patch,
+		BIGGEST_POSSIBLE_URL_IN_TEARAWAY_VITA_EBOOT_INCL_NULL, "tearaway.me:10090\x00", false, 1)
+	table.insert(patches_list, base_patch_instruction)
+	base_patch(eboot_elf_path, working_dir, patches_list)
+	local found_a_match = patches_list[1].found_a_match
+	if not found_a_match then
+		error("Could not find any urls to patch")
+	end
+	return true
+end
+```
+heres what you want to edit
+```lua
+function tearaway_patch(offset, file, url, respect_https)
+	return basic_replace(offset, file, url, BIGGEST_POSSIBLE_URL_IN_TEARAWAY_VITA_EBOOT_INCL_NULL, "url")
+end
+```
+you can change this function name to anything you want, just dont make it start with `patch_` and you want to replace the `BIGGEST_POSSIBLE_URL_IN_TEARAWAY_VITA_EBOOT_INCL_NULL` with your own number constant you made
+```lua
+patch_method_vita_tearaway = "Tearaway vita"
+function patch_vita_tearaway(eboot_elf_path, url, digest, normalise_digest, working_dir)
+
+```
+Now you need to come up with an internal patch name, something short like the games name. `tearaway` will do it cannot be over 256 characters long. If youre targeting for vita only, make the internal patch name `vita_myname`, `ps3_myname` for ps3<br/>
+now, change the function name to `patch_internalname`, and the patch_method_ to `patch_method_internalname`, and of course change the string, this will be shown in the patcher<br/>
+```lua
+	local base_patch_instruction = BasePatchInstruction:new(nil, url .. "\x00", tearaway_patch,
+		BIGGEST_POSSIBLE_URL_IN_TEARAWAY_VITA_EBOOT_INCL_NULL, "tearaway.me:10090\x00", false, 1)
+```
+now, you can change the `tearaway.me:10090\x00` url to the url you found, (make sure it ends with `\x00`), and replace `BIGGEST_POSSIBLE_URL_IN_TEARAWAY_VITA_EBOOT_INCL_NULL` with your number constant, and finally replace `tearaway_patch` with the basic replace function you made earlier
 <div id='section-id-134'/>
 
 # Building
