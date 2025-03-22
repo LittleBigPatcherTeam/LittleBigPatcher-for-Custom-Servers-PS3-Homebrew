@@ -1085,7 +1085,7 @@ void patch_eboot_thread(void *arg)
 
 s32 main(s32 argc, const char* argv[])
 {
-	dbglogger_init();
+	//dbglogger_init();
 	
 	// init the global second_thread_args
 	second_thread_args.has_finished = 0;
