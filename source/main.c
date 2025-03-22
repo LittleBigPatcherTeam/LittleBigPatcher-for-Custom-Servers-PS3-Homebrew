@@ -26,10 +26,17 @@
 #include "oscetool_main.h"
 #include "read_sfo.h"
 #include "copyfile_thing.h"
-#include "patching_eboot_elf_code.h"
 #include "for_oscetools_gloabls.h"
 #include "get_idps.h"
 #include "fail0verflow_PS3_tools/unself.h"
+
+#include "lua-5.4.7/src/lua.h"
+#include "lua-5.4.7/src/lauxlib.h"
+#include "lua-5.4.7/src/lualib.h"
+
+#define MAX_URL_LEN_INCL_NULL 72
+#define MAX_DIGEST_LEN_INCL_NULL 20
+
 
 #define BTN_LEFT       32768
 #define BTN_DOWN       16384
@@ -91,7 +98,9 @@
 #define MENU_EDIT_URLS 2
 #define MENU_EDIT_URLS_ARROW (saved_urls_count-1)*2+1
 
-#define MENU_PATCH_GAMES_ARROW 6-1
+#define MENU_PATCH_GAMES_ARROW_NOT_INCL_PATCHES 4-1
+#define MINUS_MENU_ARROW_AMNT_TO_GET_PATCH_LUA_INDEX MENU_PATCH_GAMES_ARROW_NOT_INCL_PATCHES + 1
+#define MENU_PATCH_GAMES_ARROW MENU_PATCH_GAMES_ARROW_NOT_INCL_PATCHES+method_count
 #define MENU_PATCH_GAMES 3
 
 #define MENU_BROWSE_GAMES 4
@@ -115,6 +124,8 @@
 padInfo padinfo;
 padData paddata;
 
+lua_State *L;
+
 struct TitleIdAndGameName {
 	char title_id[sizeof(DEFAULT_TITLE_ID)];
 	char game_name[128];
@@ -125,6 +136,10 @@ struct UrlToPatchTo {
 	char digest[MAX_DIGEST_LEN_INCL_NULL];
 };
 
+struct LuaPatchDetails {
+	char patch_name[PATCH_LUA_SIZE];
+	char patch_method[PATCH_METHOD_LUA_STRING_SIZE];
+};
 
 struct UrlToPatchTo saved_urls[MAX_LINES-1];
 #define RESET_SELECTED_URL_INDEX sizeof(saved_urls) / sizeof(saved_urls[0]) + 1
@@ -230,7 +245,8 @@ void draw_png(pngData *texture_input, int img_index, int x_coord, int y_coord) {
 }
 
 void drawScene(u8 current_menu,int menu_arrow, bool is_alive_toggle_thing, u8 error_yet_to_press_ok, char* error_msg, int yes_no_game_popup, int started_a_thread, int thread_current_state,
-pngData *texture_input, int * img_index, u8 saved_urls_txt_num, bool normalise_digest_checked, struct TitleIdAndGameName browse_games_buffer[], u32 browse_games_buffer_size, u32 browse_games_buffer_start,char * global_title_id
+pngData *texture_input, int * img_index, u8 saved_urls_txt_num, bool normalise_digest_checked, struct TitleIdAndGameName browse_games_buffer[], u32 browse_games_buffer_size, u32 browse_games_buffer_start,char * global_title_id,
+int method_count, struct LuaPatchDetails patch_lua_names[]
 )
 {
 	float x, y;
@@ -244,7 +260,7 @@ pngData *texture_input, int * img_index, u8 saved_urls_txt_num, bool normalise_d
     SetFontColor(TITLE_FONT_COLOUR,TITLE_BG_COLOUR);
 	x= 0.0; y = 0.0;
 	
-	DrawFormatString(START_X_FOR_PRESS_TO_REFRESH_THINGS_TEXT,y,"Press "MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_TRIANGLE_BTN" to refresh things if ->%d<- is a solid 1 or 0, app is frozen " VERSION_NUM_STR,is_alive_toggle_thing);
+	DrawFormatString(START_X_FOR_PRESS_TO_REFRESH_THINGS_TEXT,y,"P%dss "MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_TRIANGLE_BTN" to refresh things if ->%d<- is a solid 1 or 0, app is frozen " VERSION_NUM_STR,menu_arrow,is_alive_toggle_thing);
 
 
 
@@ -413,15 +429,12 @@ pngData *texture_input, int * img_index, u8 saved_urls_txt_num, bool normalise_d
 			DrawFormatString(x,y,"Revert patches");
 			y += CHARACTER_HEIGHT;
 			
-			bg_colour = (menu_arrow == 4) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
-			SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
-			DrawFormatString(x,y,"Patch! (%s)",PATCH_METHOD_MAIN_SERIES);
-			y += CHARACTER_HEIGHT;
-
-			bg_colour = (menu_arrow == 5) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
-			SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
-			DrawFormatString(x,y,"Patch! (%s)",PATCH_METHOD_KARTING);
-			y += CHARACTER_HEIGHT;
+			for (int i; i < method_count; i++) {
+				bg_colour = (menu_arrow-MINUS_MENU_ARROW_AMNT_TO_GET_PATCH_LUA_INDEX == i) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
+				SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
+				DrawFormatString(x,y,"Patch! (%s)",patch_lua_names[i].patch_method);
+				y += CHARACTER_HEIGHT;
+			}
 
 			break;
 			
@@ -877,6 +890,8 @@ void patch_eboot_thread(void *arg)
 	char dst_file_refresh_orig[sizeof("/dev_hdd0/game/ABCD12345/USRDIR/EBOOT.BIN.ORIG")];
 	int copy_file_res;
 	
+	char lua_func_name[PATCH_LUA_SIZE + sizeof("patch_")];
+	
 	sprintf(dst_file,"/dev_hdd0/game/%s/USRDIR/EBOOT.BIN.BAK",args->title_id);
 	sprintf(src_file,"/dev_hdd0/game/%s/USRDIR/EBOOT.BIN",args->title_id);
 	sprintf(dst_file_refresh_orig,"/dev_hdd0/game/%s/USRDIR/EBOOT.BIN.ORIG",args->title_id);
@@ -934,7 +949,37 @@ void patch_eboot_thread(void *arg)
 	}
 	args->current_state = THREAD_CURRENT_STATE_START_PATCHING;
 	dbglogger_log("start patching");
-	patch_res = args->patch_func(WORKING_DIR "EBOOT.ELF",my_url.url,my_url.digest,args->normalise_digest);
+	sprintf(lua_func_name,"patch_%s",args->patch_lua_name);
+	
+	// theese lua things might be unpure, something about me needing to pop the values after, but since it will always end after this idrc to do it
+    lua_getglobal(L, lua_func_name);
+
+    if (!lua_isfunction(L, -1)) {
+        args->has_finished = 1;
+		sysThreadExit(THREAD_RET_EBOOT_PATCH_FAILED);
+    }
+	
+	lua_pushstring(L,WORKING_DIR "EBOOT.ELF");
+	lua_pushstring(L,my_url.url);
+	lua_pushstring(L,my_url.digest);
+	lua_pushboolean(L,args->normalise_digest);
+	lua_pushstring(L,WORKING_DIR);
+	
+    if (lua_pcall(L, 4, 1, 0) != LUA_OK) {
+        dbglogger_log("Error calling function: %s", lua_tostring(L, -1));
+		args->has_finished = 1;
+		sysThreadExit(THREAD_RET_EBOOT_PATCH_FAILED);
+    }
+	if (lua_isnumber(L, -1)) {
+		// assumes that it just returns a normal int, which is should
+		patch_res = (int)lua_tonumber(L, -1);
+	}
+	else {
+		dbglogger_log("Returend not a number");
+		args->has_finished = 1;
+		sysThreadExit(THREAD_RET_EBOOT_PATCH_FAILED);
+	}
+
 	args->current_state = THREAD_CURRENT_STATE_DONE_PATCHING;
 	dbglogger_log("done patching");
 	
@@ -1054,15 +1099,20 @@ void patch_eboot_thread(void *arg)
 
 s32 main(s32 argc, const char* argv[])
 {
+	dbglogger_init();
+	
 	// init the global second_thread_args
 	second_thread_args.has_finished = 0;
 	second_thread_args.current_state = 0;
 	second_thread_args.normalise_digest = 1;
-	second_thread_args.patch_func = &patch_eboot_elf_main_series;
+	memset(second_thread_args.patch_lua_name,0,sizeof(second_thread_args.patch_lua_name));
 	second_thread_args.title_id[0] = 0;
 	get_idps((u8*)second_thread_args.idps);
+
+	struct LuaPatchDetails patch_lua_names[MAX_LINES];
+	int method_count = 0;
+	int method_index = 0;
 	
-	//dbglogger_init_str("file:/dev_hdd0/tmp/dbglogger.log");
 	load_config();
 	rename(OLD_SAVED_URLS_TXT,NEW_NUM_1_SAVED_URLS_TXT);
 	if (!does_file_exist(NEW_NUM_1_SAVED_URLS_TXT)) {
@@ -1089,6 +1139,8 @@ s32 main(s32 argc, const char* argv[])
 	sys_ppu_thread_t second_thread_id;
 	u64 second_thread_retval;
 	
+	int lua_do_file_res;
+	
 	int started_a_thread = 0;
 	
 	struct UrlToPatchTo temp_editing_url;
@@ -1104,7 +1156,7 @@ s32 main(s32 argc, const char* argv[])
 	u8 error_yet_to_press_ok = 0;
 	bool exit_after_done = 0;
 	char error_msg[1000];
-	char patch_method[200];
+	char patch_method[sizeof(patch_lua_names[0].patch_method)];
 	
 	char pretty_showey[500];
 	char icon_0_main_path[sizeof("/dev_hdd0/game/ABCD12345/ICON0.PNG")];
@@ -1125,6 +1177,72 @@ s32 main(s32 argc, const char* argv[])
 	u32 browse_games_buffer_size = 0;
 	struct TitleIdAndGameName browse_games_buffer[browse_games_buffer_max_size];
 	
+	// lua setup
+	L = luaL_newstate();
+	luaL_openlibs(L);
+
+	lua_do_file_res = luaL_dofile(L, PATCH_LUA_FILE);
+	if (lua_do_file_res) {
+		dbglogger_log("Error: %s\n", lua_tostring(L, -1));
+		return 1;
+	}
+	
+	// checking for patch functions
+	char * func_name;
+	int fun_name_len;
+
+	int full_method_count = 0;
+	char method_name_temp[sizeof(patch_lua_names[0].patch_name)+sizeof("patch_method_")];
+	char * method_name_string_value_temp;
+	
+	lua_pushglobaltable(L);
+	lua_pushnil(L);
+	while (lua_next(L, -2)) {
+		if (!lua_isfunction(L, -1)) {
+			goto lua_pop_continue;
+		}
+		func_name = lua_tostring(L, -2);
+		if (strncmp(func_name,"patch_",strlen("patch_")) != 0) {
+			goto lua_pop_continue;
+		}
+		// dont accept `patch_` named things
+		fun_name_len = strlen(func_name);
+		if (fun_name_len == strlen("patch_")) {
+			goto lua_pop_continue;
+		}
+		if (fun_name_len > PATCH_LUA_SIZE-strlen("patch_")) {
+			goto lua_pop_continue;
+		}
+		if (method_count > MAX_LINES) {
+			goto lua_pop_continue;
+		}
+		method_count++;
+		strcpy(patch_lua_names[method_index].patch_name,func_name+strlen("patch_"));
+		method_index++;
+		lua_pop_continue:
+		lua_pop(L, 1); 
+	}
+	lua_pop(L, 1); 
+
+	for (method_index = 0; method_index < method_count; method_index++) {
+		sprintf(method_name_temp,"patch_method_%s",patch_lua_names[method_index].patch_name);
+		lua_getglobal(L, method_name_temp);
+		if (lua_isstring(L, -1)) {
+			method_name_string_value_temp = lua_tostring(L, -1);
+			if (strlen(method_name_string_value_temp) > sizeof(patch_lua_names[method_index].patch_method)-1) {
+				continue;
+			}
+			strcpy(patch_lua_names[method_index].patch_method,method_name_string_value_temp);
+			full_method_count++;
+		}
+		lua_pop(L, 1);
+	}
+	if (full_method_count != method_count) {
+		dbglogger_log("found some functions but they had no patch_method_ string for it");
+		return 1;
+	}
+	method_index = 0;
+
 	// Ok, everything is setup. Now for the main loop.
 	while(1) {
 		// menu control logic
@@ -1323,9 +1441,7 @@ s32 main(s32 argc, const char* argv[])
 								current_menu = MENU_BROWSE_GAMES;
 								menu_arrow = 0;
 								break;
-							case 3:
-							case 4:
-							case 5:
+							default:
 								if (!title_id_exists(global_title_id)) {
 									error_yet_to_press_ok = 1;
 									sprintf(error_msg,"We could not find %s, is the title id correct? also make sure the game is updated",global_title_id);
@@ -1355,19 +1471,9 @@ s32 main(s32 argc, const char* argv[])
 								}
 								
 								else {
-									if (menu_arrow == 4) {
-										second_thread_args.patch_func = &patch_eboot_elf_main_series;
-										strcpy(patch_method,PATCH_METHOD_MAIN_SERIES);
-									}
-									else if (menu_arrow == 5) {
-										second_thread_args.patch_func = &patch_eboot_elf_karting;
-										strcpy(patch_method,PATCH_METHOD_KARTING);
-									}
-									else {
-										second_thread_args.patch_func = &patch_eboot_elf_main_series;
-										strcpy(patch_method,"you should never see this");
-									}
-									
+									method_index = menu_arrow - MINUS_MENU_ARROW_AMNT_TO_GET_PATCH_LUA_INDEX;
+									strcpy(patch_method,patch_lua_names[method_index].patch_method);
+									strcpy(second_thread_args.patch_lua_name,patch_lua_names[method_index].patch_name);
 									yes_no_game_popup = YES_NO_GAME_POPUP_PATCH_GAME;
 									sprintf(error_msg,"Do you want to patch (%s)%s",patch_method,pretty_showey);
 								}
@@ -1497,7 +1603,8 @@ s32 main(s32 argc, const char* argv[])
             TINY3D_BLEND_RGB_FUNC_ADD | TINY3D_BLEND_ALPHA_FUNC_ADD);
 		
         drawScene(current_menu,menu_arrow,is_alive_toggle_thing,error_yet_to_press_ok,error_msg,yes_no_game_popup,
-		started_a_thread,second_thread_args.current_state,&icon_0_main,&icon_0_main_index,saved_urls_txt_num,second_thread_args.normalise_digest,browse_games_buffer,browse_games_buffer_size,browse_games_buffer_start,global_title_id); // Draw
+		started_a_thread,second_thread_args.current_state,&icon_0_main,&icon_0_main_index,saved_urls_txt_num,second_thread_args.normalise_digest,browse_games_buffer,browse_games_buffer_size,browse_games_buffer_start,global_title_id,
+		method_count,patch_lua_names); // Draw
 		is_alive_toggle_thing = !is_alive_toggle_thing;
 
         /* DRAWING FINISH HERE */

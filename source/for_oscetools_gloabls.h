@@ -1,8 +1,10 @@
 #ifndef FOR_OSCETOOLS_GLOABLS_H_
 #define FOR_OSCETOOLS_GLOABLS_H_
 
+#define PATCH_LUA_SIZE 256
+#define PATCH_METHOD_LUA_STRING_SIZE 512
+
 #include <ppu-types.h>
-#include "patching_eboot_elf_code.h"
 
 bool does_file_exist(char * filename);
 
@@ -11,7 +13,7 @@ struct SecondThreadArgs {
 	int current_state;
 	bool normalise_digest;
 	u64 idps[2];
-	PATCH_EBOOT_FUNC_SIGNATURE(patch_func);
+	char patch_lua_name[256];
     char title_id[sizeof("BCES12345")];
 };
 
