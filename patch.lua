@@ -22,7 +22,7 @@ LBP_VITA_URL_FOR_CROSS_CONTROLLER = "lbpvita.online.scee.com\x00"
 
 ---@param str string
 ---@return string
-function repr(str)
+local function repr(str)
 	---@type string
 	local result, _ = string.format("%q", str):gsub("\\\n", "\\n")
 	return result
@@ -80,7 +80,7 @@ function BasePatchInstruction.__index(tab, key)
 end
 
 -- https://stackoverflow.com/questions/67255213/how-to-create-a-python-generator-in-lua
-function range_co_for_gen_maker_two_args(co, arg1, arg2)
+local function range_co_for_gen_maker_two_args(co, arg1, arg2)
 	return function()
 		local err, v = coroutine.resume(co, arg1, arg2)
 		if coroutine.status(co) ~= "dead" then
@@ -89,13 +89,13 @@ function range_co_for_gen_maker_two_args(co, arg1, arg2)
 	end
 end
 
-function gen_maker_two_args(func, arg1, arg2)
+local function gen_maker_two_args(func, arg1, arg2)
 	return range_co_for_gen_maker_two_args(coroutine.create(func), arg1, arg2)
 end
 
 ---@param main_str string
 ---@param to_find_str string
-function find_all_in_str(main_str, to_find_str)
+local function find_all_in_str(main_str, to_find_str)
 	local b = 1
 	while true do
 		local x, y = string.find(main_str, to_find_str, b, true)
@@ -108,7 +108,7 @@ end
 --- this assumes that the string ends with a null char
 ---@param input_str string
 ---@return string|nil
-function remove_trailing_null_chars(input_str)
+local function remove_trailing_null_chars(input_str)
 	for new_str in string.gmatch(input_str, '([^\x00]+)') do
 		return new_str
 	end
@@ -117,7 +117,7 @@ end
 
 ---@param url string
 ---@return string|nil
-function extract_domain_from_url(url)
+local function extract_domain_from_url(url)
 	_, url = url:match("^(https?://)(.+)$")
 	if not url then
 		return url
@@ -135,7 +135,7 @@ end
 ---@param biggest_possible_size integer
 ---@return string|nil
 ---@return integer|nil
-function check_if_is_valid_null_termed(offset, file, input_data, biggest_possible_size)
+local function check_if_is_valid_null_termed(offset, file, input_data, biggest_possible_size)
 	file:seek("set", offset)
 	local checking_value = file:read(biggest_possible_size)
 
@@ -166,7 +166,7 @@ end
 ---@param offset integer
 ---@param new_thing string
 ---@param in_size_url integer
-function write_new_thing(file, offset, new_thing, in_size_url)
+local function write_new_thing(file, offset, new_thing, in_size_url)
 	-- print(new_thing)
 	-- print(string.format("%x",string.len(new_thing)))
 	-- print(string.format("%x",in_size_url))
@@ -185,7 +185,7 @@ end
 ---@param url string
 ---@param respect_https boolean
 ---@return boolean
-function lbp_main_is_offset_valid(offset, file, url, respect_https)
+local function lbp_main_is_offset_valid(offset, file, url, respect_https)
 	-- can copy and paste this
 	local existing_url_orig, in_size_url = check_if_is_valid_null_termed(offset, file, url,
 		BIGGEST_POSSIBLE_URL_IN_EBOOT_INCL_NULL)
@@ -231,7 +231,7 @@ end
 ---@param biggest_possible_size integer
 ---@param thing_type_str_for_error string
 ---@return boolean
-function basic_replace(offset, file, thing, biggest_possible_size, thing_type_str_for_error)
+local function basic_replace(offset, file, thing, biggest_possible_size, thing_type_str_for_error)
 	-- can copy and paste this
 	local existing_url_orig, in_size_url = check_if_is_valid_null_termed(offset, file, thing, biggest_possible_size)
 	if not in_size_url or not existing_url_orig then
@@ -258,7 +258,7 @@ end
 ---@param file file
 ---@param digest string
 ---@param respect_https boolean
-function lbp_main_digest_patch(offset, file, digest, respect_https)
+local function lbp_main_digest_patch(offset, file, digest, respect_https)
 	return basic_replace(offset, file, digest, BIGGEST_POSSIBLE_DIGEST_IN_EBOOT_INCL_NULL, "digest")
 end
 
@@ -267,7 +267,7 @@ end
 ---@param url string
 ---@param respect_https boolean
 ---@return boolean
-function lbp_vita_loose_domain_for_cross_controller_app_patch(offset, file, url, respect_https)
+local function lbp_vita_loose_domain_for_cross_controller_app_patch(offset, file, url, respect_https)
 	return basic_replace(offset, file, url, BIGGEST_POSSIBLE_URL_IN_EBOOT_INCL_NULL, "url")
 end
 
@@ -276,7 +276,7 @@ end
 ---@param url string
 ---@param respect_https boolean
 ---@return boolean
-function lbpk_patch(offset, file, url, respect_https)
+local function lbpk_patch(offset, file, url, respect_https)
 	return basic_replace(offset, file, url, BIGGEST_POSSIBLE_URL_IN_LBPK_EBOOT_INCL_NULL, "url")
 end
 
@@ -284,8 +284,8 @@ end
 ---@param working_dir string
 ---@param list_of_patches (BasePatchInstruction)[]
 ---@return nil
-function base_patch(eboot_elf_path, working_dir,
-					list_of_patches)
+local function base_patch(eboot_elf_path, working_dir,
+						  list_of_patches)
 	local file = io.open(eboot_elf_path, "r+b")
 	if not file then
 		error(eboot_elf_path .. " was not found")
@@ -346,8 +346,8 @@ end
 ---@param respect_https boolean
 ---@param lbp_vita_loose_domain_for_cross_controller_app boolean
 ---@return boolean
-function internal_patch_lbp_main(eboot_elf_path, url, digest, normalise_digest, working_dir, respect_https,
-								 lbp_vita_loose_domain_for_cross_controller_app)
+local function internal_patch_lbp_main(eboot_elf_path, url, digest, normalise_digest, working_dir, respect_https,
+									   lbp_vita_loose_domain_for_cross_controller_app)
 	---@type (BasePatchInstruction)[]
 	local patches_list = {}
 	local base_patch_instruction = BasePatchInstruction:new(nil, url .. "\x00", lbp_main_is_offset_valid,
