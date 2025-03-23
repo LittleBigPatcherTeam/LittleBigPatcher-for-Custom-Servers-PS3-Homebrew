@@ -1,21 +1,21 @@
-MAX_URL_LEN_INCL_NULL = 72
-BIGGEST_POSSIBLE_URL_IN_EBOOT_INCL_NULL = 80
-MAX_DIGEST_LEN_INCL_NULL = 20
-BIGGEST_POSSIBLE_DIGEST_IN_EBOOT_INCL_NULL = 24
+local MAX_URL_LEN_INCL_NULL <const> = 72
+local BIGGEST_POSSIBLE_URL_IN_EBOOT_INCL_NULL <const> = 80
+local MAX_DIGEST_LEN_INCL_NULL <const> = 20
+local BIGGEST_POSSIBLE_DIGEST_IN_EBOOT_INCL_NULL <const> = 24
 
-BIGGEST_POSSIBLE_URL_IN_LBPK_EBOOT_INCL_NULL = 30
+local BIGGEST_POSSIBLE_URL_IN_LBPK_EBOOT_INCL_NULL <const> = 30
 
 -- any other digests shall be added here for refresh or normalise_digest
-REPLACE_DIGESTS = {
+local REPLACE_DIGESTS <const> = {
 	"!?/*hjk7duOZ1f@daX\x00", -- lbp1, lbp2, lbp3 and many more debug builds digest
 	"$ghj3rLl2e5E28@~[!\x00", -- lbpv digest
 	"9yF*A&L#5i3q@9|&*F\x00", -- lbp hub digest
 	"CustomServerDigest\x00" -- refresher patcher digest
 	-- "C5S^FWw*8yIp3O%Me!\x00" -- ps4 digest, ps4 uses a differnt digest calcluation so its not included here
 }
-NORMALISE_DIGEST = "!?/*hjk7duOZ1f@daX" -- we will put the trailing null later
+local NORMALISE_DIGEST <const> = "!?/*hjk7duOZ1f@daX" -- we will put the trailing null later
 
-LBP_VITA_URL_FOR_CROSS_CONTROLLER = "lbpvita.online.scee.com\x00"
+local LBP_VITA_URL_FOR_CROSS_CONTROLLER <const> = "lbpvita.online.scee.com\x00"
 
 -- you shouldnt need to use working_dir but its passed nevertheless
 
@@ -38,7 +38,7 @@ end
 ---@field respect_https boolean
 ---@field base_patch_group integer
 ---@field found_a_match boolean
-BasePatchInstruction = {}
+local BasePatchInstruction = {}
 
 -- base_patch_group means if any of them found a match in the group, it will stop doing that group
 ---@param url string
