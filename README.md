@@ -373,3 +373,9 @@ then you can run the python script in python3 `python3 build.py` in order to bui
 <div id='section-id-149'/>
 
 ### for backup decrypt if the oscetool decrypt fails
+
+<div id='lua-credit'/>
+
+## [Lua](https://www.lua.org/ftp/lua-5.4.7.tar.gz)
+
+In no way am i saying i made lua lol, please refer to [lua](https://www.lua.org/license.html) but i did delete some unused files from the tar.gz to save space, and had to rename 2 functions named `main` to `luac_main` and `lua_main`
