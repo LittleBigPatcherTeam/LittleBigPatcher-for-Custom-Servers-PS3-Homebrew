@@ -281,18 +281,18 @@ here, we can see its `Length(h): 14`, so our number will be `0x14` (if it says `
 ## Adding in the patch
 Open up patch.lua in an editor and go to the bottom to add in your number, like so (give a descriptive name) (there is no harm in having a bigger number, but do not make it smaller than any of the urls with the null bytes in the eboot, make it bigger to be safe)
 ```lua
-BIGGEST_POSSIBLE_URL_IN_TEARAWAY_VITA_EBOOT_INCL_NULL = 0x14
+local BIGGEST_POSSIBLE_URL_IN_TEARAWAY_VITA_EBOOT_INCL_NULL <const> = 0x14
 ```
 now here is the boiler plate code
 ```lua
-BIGGEST_POSSIBLE_URL_IN_TEARAWAY_VITA_EBOOT_INCL_NULL = 0x14
+local BIGGEST_POSSIBLE_URL_IN_TEARAWAY_VITA_EBOOT_INCL_NULL <const> = 0x14
 
 ---@param offset integer
 ---@param file file
 ---@param url string
 ---@param respect_https boolean
 ---@return boolean
-function tearaway_patch(offset, file, url, respect_https)
+local function tearaway_patch(offset, file, url, respect_https)
 	return basic_replace(offset, file, url, BIGGEST_POSSIBLE_URL_IN_TEARAWAY_VITA_EBOOT_INCL_NULL, "url")
 end
 
@@ -316,7 +316,7 @@ end
 ```
 heres what you want to edit
 ```lua
-function tearaway_patch(offset, file, url, respect_https)
+local function tearaway_patch(offset, file, url, respect_https)
 	return basic_replace(offset, file, url, BIGGEST_POSSIBLE_URL_IN_TEARAWAY_VITA_EBOOT_INCL_NULL, "url")
 end
 ```
