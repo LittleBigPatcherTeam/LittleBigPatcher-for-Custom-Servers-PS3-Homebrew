@@ -265,7 +265,7 @@ function patch_vita_tearaway(eboot_elf_path, url, digest, normalise_digest, work
 end
 ```
 (if the function starts with `patch_method_vita` it won't show on ps3, and `patch_method_ps3` wont show on vita, otherwise will show on both systems)<br/>
-If you know what you're doing now, feel free to add in a new patch method now, but if you would like some more help...
+If you know what you're doing now, feel free to add in a new patch method now. You can use the `patch_ps3_lbpk` method as a base, but if you would like some more help...
 
 ## Making a basic patch
 Lets make a patch method for Tearaway on the vita, we would like to patch in a url to replace `tearaway.me:10090`, first we need to find the in eboot.bin.elf url size, so if you're using HxD, open up the `eboot.bin.elf` (or `EBOOT.ELF` on ps3) on HxD
@@ -305,13 +305,10 @@ patch_method_vita_tearaway = "Tearaway vita"
 ---@return boolean Does not matter, if something goes wrong during patching, you should `error("something went wrong")`, try to make sure you close the eboot file.
 function patch_vita_tearaway(eboot_elf_path, url, digest, normalise_digest, working_dir)
 	---@type (BasePatchInstruction)[]
-	local patches_list = {}
-	local base_patch_instruction = BasePatchInstruction:new(nil, url .. "\x00", tearaway_patch,
-		BIGGEST_POSSIBLE_URL_IN_TEARAWAY_VITA_EBOOT_INCL_NULL, "tearaway.me:10090\x00", false, 1)
-	table.insert(patches_list, base_patch_instruction)
+	local patches_list = { BasePatchInstruction:new(nil, url .. "\x00", tearaway_patch,
+		BIGGEST_POSSIBLE_URL_IN_TEARAWAY_VITA_EBOOT_INCL_NULL, "tearaway.me:10090\x00", false, 1) }
 	base_patch(eboot_elf_path, working_dir, patches_list)
-	local found_a_match = patches_list[1].found_a_match
-	if not found_a_match then
+	if not patches_list[1].found_a_match then
 		error("Could not find any urls to patch")
 	end
 	return true
@@ -332,8 +329,8 @@ function patch_vita_tearaway(eboot_elf_path, url, digest, normalise_digest, work
 Now you need to come up with an internal patch name, something short like the games name. `tearaway` will do it cannot be over 256 characters long. If youre targeting for vita only, make the internal patch name `vita_myname`, `ps3_myname` for ps3<br/>
 now, change the function name to `patch_internalname`, and the patch_method_ to `patch_method_internalname`, and of course change the string, this will be shown in the patcher<br/>
 ```lua
-	local base_patch_instruction = BasePatchInstruction:new(nil, url .. "\x00", tearaway_patch,
-		BIGGEST_POSSIBLE_URL_IN_TEARAWAY_VITA_EBOOT_INCL_NULL, "tearaway.me:10090\x00", false, 1)
+	local patches_list = { BasePatchInstruction:new(nil, url .. "\x00", tearaway_patch,
+		BIGGEST_POSSIBLE_URL_IN_TEARAWAY_VITA_EBOOT_INCL_NULL, "tearaway.me:10090\x00", false, 1) }
 ```
 now, you can change the `tearaway.me:10090\x00` url to the url you found, (make sure it ends with `\x00`), and replace `BIGGEST_POSSIBLE_URL_IN_TEARAWAY_VITA_EBOOT_INCL_NULL` with your number constant, and finally replace `tearaway_patch` with the basic replace function you made earlier
 <div id='section-id-134'/>
