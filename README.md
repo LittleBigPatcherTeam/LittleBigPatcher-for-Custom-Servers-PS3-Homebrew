@@ -245,6 +245,7 @@ it will look for the string `lbpk.ps3.online.scea.com\0`, basically the same as 
 <div id='using-the-lua-api'/>
 
 # Adding your own patch method, or editing the exsiting ones (only using lua, no c or compiler needed)
+`patch.lua` is licenced with the MIT Licence, so you can edit and change it all you like, refer to [https://github.com/LittleBigPatcherTeam/LittleBigElfPatcherLua](https://github.com/LittleBigPatcherTeam/LittleBigElfPatcherLua) for Licence file<br><br>
 If you will like to edit the patching code, or add your own patching method then you can edit the `patch.lua` file!<br/>
 You will find this file in
 `ux0:/app/LBPC59548/` on vita, `/dev_hdd0/game/LBPCSPPHB/USRDIR/` on ps3. You can edit this file freely, although i highly reccomend to do most of your testing on your dev machine using the game's EBOOT.ELF (or `eboot.bin.elf` on vita), and to do final testing, upload it to the folder whichever device youre using and reboot the app.
