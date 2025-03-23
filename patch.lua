@@ -96,7 +96,7 @@ end
 ---@param main_str string
 ---@param to_find_str string
 function find_all_in_str(main_str, to_find_str)
-	b = 1
+	local b = 1
 	while true do
 		local x, y = string.find(main_str, to_find_str, b, true)
 		if x == nil then break end
@@ -292,7 +292,7 @@ function base_patch(eboot_elf_path, working_dir,
 	end
 	local is_function_succeed, result = pcall(function()
 		local done_groups_dict = {}
-		trailing_buffer_size = 0
+		local trailing_buffer_size = 0
 		for _, value in ipairs(list_of_patches) do
 			if value.biggest_possible_size > trailing_buffer_size then
 				trailing_buffer_size = value
