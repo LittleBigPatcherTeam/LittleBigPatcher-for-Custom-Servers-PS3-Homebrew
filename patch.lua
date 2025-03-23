@@ -413,13 +413,10 @@ patch_method_ps3_lbpk = "LittleBigPlanet Karting"
 ---@return boolean
 function patch_ps3_lbpk(eboot_elf_path, url, digest, normalise_digest, working_dir)
 	---@type (BasePatchInstruction)[]
-	local patches_list = {}
-	local base_patch_instruction = BasePatchInstruction:new(nil, url .. "\x00", lbpk_patch,
-		BIGGEST_POSSIBLE_URL_IN_LBPK_EBOOT_INCL_NULL, "lbpk.ps3.online.scea.com\x00", false, 1)
-	table.insert(patches_list, base_patch_instruction)
+	local patches_list = { BasePatchInstruction:new(nil, url .. "\x00", lbpk_patch,
+		BIGGEST_POSSIBLE_URL_IN_LBPK_EBOOT_INCL_NULL, "lbpk.ps3.online.scea.com\x00", false, 1) }
 	base_patch(eboot_elf_path, working_dir, patches_list)
-	local found_a_match = patches_list[1].found_a_match
-	if not found_a_match then
+	if not patches_list[1].found_a_match then
 		error("Could not find any urls to patch")
 	end
 	return true
