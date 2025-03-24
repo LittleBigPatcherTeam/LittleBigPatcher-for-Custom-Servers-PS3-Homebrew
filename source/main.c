@@ -836,27 +836,22 @@ u32 load_patchable_games(struct TitleIdAndGameName buffer[], u32 start_offset, u
 
 int revert_eboot(char * title_id)
 {
-	int copy_file_res;
+	char eboot_bin_bak_file[sizeof("/dev_hdd0/game/ABCD12345/USRDIR/EBOOT.BIN.BAK")];
+	char eboot_bin_orig_file[sizeof("/dev_hdd0/game/ABCD12345/USRDIR/EBOOT.BIN.ORIG")];
+	char output_eboot_bin_file[sizeof("/dev_hdd0/game/ABCD12345/USRDIR/EBOOT.BIN")];
+
+	sprintf(eboot_bin_bak_file,"/dev_hdd0/game/%s/USRDIR/EBOOT.BIN.BAK",title_id);
+	sprintf(output_eboot_bin_file,"/dev_hdd0/game/%s/USRDIR/EBOOT.BIN",title_id);
+	sprintf(eboot_bin_orig_file,"/dev_hdd0/game/%s/USRDIR/EBOOT.BIN.ORIG",title_id);
 	
-	char src_file[sizeof("/dev_hdd0/game/ABCD12345/USRDIR/EBOOT.BIN.BAK")];
-	char dst_file[sizeof("/dev_hdd0/game/ABCD12345/USRDIR/EBOOT.BIN")];
-	char src_file_refresh_orig[sizeof("/dev_hdd0/game/ABCD12345/USRDIR/EBOOT.BIN.ORIG")];
-	
-	sprintf(src_file,"/dev_hdd0/game/%s/USRDIR/EBOOT.BIN.BAK",title_id);
-	sprintf(dst_file,"/dev_hdd0/game/%s/USRDIR/EBOOT.BIN",title_id);
-	sprintf(src_file_refresh_orig,"/dev_hdd0/game/%s/USRDIR/EBOOT.BIN.ORIG",title_id);
-	
-	if (!does_file_exist(src_file)) {
-		copy_file_res = copy_file(dst_file,src_file_refresh_orig);
-		if (copy_file_res == -1) {
-			return copy_file_res;
-		}
-		return copy_file(src_file,src_file_refresh_orig);
-		
+	// try copying from EBOOT.BIN.ORIG file
+	if (does_file_exist(eboot_bin_orig_file)) {
+		return copy_file(output_eboot_bin_file,eboot_bin_orig_file);
 	}
-	
-	copy_file_res = copy_file(dst_file,src_file);
-	return copy_file_res;
+	// then just copy from EBOOT.BIN.BAK file if EBOOT.BIN.ORIG does not exist
+	else {
+		return copy_file(output_eboot_bin_file,eboot_bin_bak_file);
+	}
 }
 
 void revert_eboot_thread(void *arg) 
