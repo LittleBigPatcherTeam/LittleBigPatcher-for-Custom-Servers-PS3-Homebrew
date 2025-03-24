@@ -80,12 +80,12 @@
 #define THREAD_RET_EBOOT_BACKUP_FAILED 7
 
 #define THREAD_CURRENT_STATE_CLEANING_WORKSPACE 1
-#define THREAD_CURRENT_STATE_MAKING_EBOOT_BIN_BAK 2
-#define THREAD_CURRENT_STATE_RESTORING_EBOOT_BIN_BAK 3
-#define THREAD_CURRENT_STATE_DECRYPTING_EBOOT_BIN 4
-#define THREAD_CURRENT_STATE_UNSELF_EBOOT_BIN 5
-#define THREAD_CURRENT_STATE_START_PATCHING 6
-#define THREAD_CURRENT_STATE_DONE_PATCHING 7
+#define THREAD_CURRENT_STATE_RESTORING_EBOOT_BIN_BAK 2
+#define THREAD_CURRENT_STATE_DECRYPTING_EBOOT_BIN 3
+#define THREAD_CURRENT_STATE_UNSELF_EBOOT_BIN 4
+#define THREAD_CURRENT_STATE_START_PATCHING 5
+#define THREAD_CURRENT_STATE_DONE_PATCHING 6
+#define THREAD_CURRENT_STATE_MAKING_EBOOT_BIN_BAK 7
 #define THREAD_CURRENT_ENCRYPTING_FOR_DIGITAL 8
 #define THREAD_CURRENT_ENCRYPTING_FOR_DISC 9
 
@@ -297,11 +297,6 @@ int method_count, struct LuaPatchDetails patch_lua_names[]
 				DrawString(x, y, "Cleaning workspace");
 				y += CHARACTER_HEIGHT;
 
-				bg_colour = (thread_current_state == THREAD_CURRENT_STATE_MAKING_EBOOT_BIN_BAK) ? SELECTED_FONT_BG_COLOUR : TITLE_BG_COLOUR;
-				SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
-				DrawString(x, y, "Making a backup of EBOOT.BIN since no EBOOT.BIN.BAK was found");
-				y += CHARACTER_HEIGHT;
-
 				bg_colour = (thread_current_state == THREAD_CURRENT_STATE_RESTORING_EBOOT_BIN_BAK) ? SELECTED_FONT_BG_COLOUR : TITLE_BG_COLOUR;
 				SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
 				DrawString(x, y, "Restoring EBOOT.BIN.BAK file");
@@ -325,6 +320,11 @@ int method_count, struct LuaPatchDetails patch_lua_names[]
 				bg_colour = (thread_current_state == THREAD_CURRENT_STATE_DONE_PATCHING) ? SELECTED_FONT_BG_COLOUR : TITLE_BG_COLOUR;
 				SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
 				DrawString(x, y, "Done patching");
+				y += CHARACTER_HEIGHT;
+
+				bg_colour = (thread_current_state == THREAD_CURRENT_STATE_MAKING_EBOOT_BIN_BAK) ? SELECTED_FONT_BG_COLOUR : TITLE_BG_COLOUR;
+				SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
+				DrawString(x, y, "Making a backup of EBOOT.BIN since no EBOOT.BIN.BAK was found");
 				y += CHARACTER_HEIGHT;
 
 				bg_colour = (thread_current_state == THREAD_CURRENT_ENCRYPTING_FOR_DIGITAL) ? SELECTED_FONT_BG_COLOUR : TITLE_BG_COLOUR;
@@ -897,14 +897,7 @@ void patch_eboot_thread(void *arg)
 	
 	// only backup eboot if eboot.bin.bak dont exist
 	if ((!does_file_exist(dst_file)) && (!does_file_exist(dst_file_refresh_orig))) {
-		args->current_state = THREAD_CURRENT_STATE_MAKING_EBOOT_BIN_BAK;
-		dbglogger_log("No EBOOT.BIN.BAK was found, so making one");
-		copy_file_res = copy_file(dst_file,src_file);
-		
-		if (copy_file_res == -1) {
-			args->has_finished = 1;
-			sysThreadExit(THREAD_RET_EBOOT_BACKUP_FAILED);
-		}
+		// backup EBOOT.BIN later
 	}
 	else {
 		args->current_state = THREAD_CURRENT_STATE_RESTORING_EBOOT_BIN_BAK;
@@ -977,7 +970,19 @@ void patch_eboot_thread(void *arg)
 	
 	char out_bin[sizeof("/dev_hdd0/game/ABCD12345/USRDIR/EBOOT.BIN")];
 	sprintf(out_bin,"/dev_hdd0/game/%s/USRDIR/EBOOT.BIN",args->title_id);
-	
+
+	// only backup eboot if eboot.bin.bak dont exist
+	if ((!does_file_exist(dst_file)) && (!does_file_exist(dst_file_refresh_orig))) {
+		args->current_state = THREAD_CURRENT_STATE_MAKING_EBOOT_BIN_BAK;
+		dbglogger_log("No EBOOT.BIN.BAK was found, so making one");
+		copy_file_res = copy_file(dst_file,src_file);
+		
+		if (copy_file_res == -1) {
+			args->has_finished = 1;
+			sysThreadExit(THREAD_RET_EBOOT_BACKUP_FAILED);
+		}
+	}
+
 	remove(out_bin); // remove the old EBOOT.BIN to ensure that it actually encrypted the file
 	// some of the args in argv is not getting loaded, refer to oscetool_main.c for more info
 	if (global_is_digital_eboot) {
