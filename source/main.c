@@ -1265,7 +1265,7 @@ s32 main(s32 argc, const char* argv[])
 
 						case THREAD_RET_EBOOT_BAK_NO_EXIST:
 							error_yet_to_press_ok = 1;
-							sprintf(error_msg,"EBOOT.BIN.BAK not on %s, most likley you never patched this game before",global_title_id);
+							sprintf(error_msg,"EBOOT.BIN.BAK not on %s\nmost likley you never patched this game before",global_title_id);
 							current_menu = MENU_PATCH_GAMES;
 							menu_arrow = 0;
 							goto draw_scene_direct;
