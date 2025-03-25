@@ -19,6 +19,7 @@ A simple way to patch your LittleBigPlanet games to connect to custom servers wi
 https://www.youtube.com/watch?v=CtDRYwz7iUw
 
 # Table of contents
+- [Keyboard mapping](#keybaord-mapping-id)
 - [Features and FAQ](#section-id-8)
   - [works on both PS3 and RPCS3](#section-id-9)
   - [Not a pretty GUI, but functional!](#section-id-10)
@@ -50,6 +51,15 @@ https://www.youtube.com/watch?v=CtDRYwz7iUw
 - [Credits (If i missed anyone please let me know)](#section-id-139)
 
 ![idk](https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/blob/main/screenshots_for_readme/main_menu.png?raw=true)<br/>
+
+<div id='keybaord-mapping-id'/>
+
+# Keyboard mapping
+The keys mapped are:<br><br>
+WASD and ARROW keys to dpad<br>
+ENTER and SPACE key to CROSS<br>
+ESC and BACKSPACE key to CIRCLE<br>
+R and F5 key to TRIANGLE<br>
 
 <div id='section-id-8'/>
 
