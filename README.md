@@ -15,6 +15,9 @@ A simple way to patch your LittleBigPlanet games to connect to custom servers wi
 # Latest release (.pkg download)
 [http://bit.ly/patchps3](http://bit.ly/patchps3)
 
+# Video guide
+https://www.youtube.com/watch?v=CtDRYwz7iUw
+
 # Table of contents
 - [Features and FAQ](#section-id-8)
   - [works on both PS3 and RPCS3](#section-id-9)
