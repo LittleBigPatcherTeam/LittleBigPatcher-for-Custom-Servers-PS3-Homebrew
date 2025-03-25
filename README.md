@@ -16,7 +16,7 @@ A simple way to patch your LittleBigPlanet games to connect to custom servers wi
 [http://bit.ly/patchps3](http://bit.ly/patchps3)
 
 # Video guide
-https://www.youtube.com/watch?v=CtDRYwz7iUw
+[https://www.youtube.com/watch?v=CtDRYwz7iUw](https://www.youtube.com/watch?v=CtDRYwz7iUw)
 
 # Table of contents
 - [Keyboard mapping](#keybaord-mapping-id)
