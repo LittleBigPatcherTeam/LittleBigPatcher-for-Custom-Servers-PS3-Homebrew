@@ -6,6 +6,7 @@
 #include <assert.h>
 
 #include <io/pad.h>
+#include <io/kb.h> 
 
 #include <sys/thread.h>
 #include <ppu-types.h>
@@ -124,6 +125,10 @@
 padInfo padinfo;
 padData paddata;
 
+KbInfo kbinfo;
+KbConfig kbconfig;
+KbData kbdata;
+
 lua_State *L;
 
 struct TitleIdAndGameName {
@@ -154,16 +159,96 @@ void exiting()
 
 unsigned get_button_pressed()
 {
+	// no clue what these are, utf-16 codes?
+	#define KB_KEY_RIGHT_ARROW 0x804F
+	#define KB_KEY_LEFT_ARROW 0x8050
+	#define KB_KEY_DOWN_ARROW 0x8051
+	#define KB_KEY_UP_ARROW 0x8052
+	
+	#define KB_KEY_ESC 0x8029
+	
+	#define KB_KEY_F5 0x803e
+	
+	// these i know are ascii codes
+	#define KB_KEY_ENTER 0xA
+	#define KB_KEY_BACKSPACE 0x8
+	
+	#define KB_KEY_UPPER_W 0x57
+	#define KB_KEY_LOWER_W 0x77
+	#define KB_KEY_UPPER_A 0x41
+	#define KB_KEY_LOWER_A 0x61
+	#define KB_KEY_UPPER_S 0x53
+	#define KB_KEY_LOWER_S 0x73
+	#define KB_KEY_UPPER_D 0x44
+	#define KB_KEY_LOWER_D 0x64
+	#define KB_KEY_DOWN_SPACE 0x20
+	#define KB_KEY_UPPER_R 0x52
+	#define KB_KEY_LOWER_R 0x72
+	
 	int i_for_pad_num;
-	unsigned result;
+	int i_for_kb_num;
+	int j_for_kb_num;
+	unsigned result = 0;
 	
 	ioPadGetInfo(&padinfo);
+	ioKbGetInfo(&kbinfo);
+	
+	for(i_for_kb_num = 0; i_for_kb_num < MAX_KEYBOARDS; i_for_kb_num++){
+		if(kbinfo.status[i_for_kb_num]){
+			ioKbRead(i_for_kb_num, &kbdata);
+			for(int j_for_kb_num = 0; j_for_kb_num < kbdata.nb_keycode; j_for_kb_num++) {
+				switch (kbdata.keycode[j_for_kb_num]) {
+					case KB_KEY_UP_ARROW:
+					case KB_KEY_UPPER_W:
+					case KB_KEY_LOWER_W:
+						result |= BTN_UP;
+						break;
 
+					case KB_KEY_DOWN_ARROW:
+					case KB_KEY_UPPER_S:
+					case KB_KEY_LOWER_S:
+						result |= BTN_DOWN;
+						break;
+
+					case KB_KEY_LEFT_ARROW:
+					case KB_KEY_UPPER_A:
+					case KB_KEY_LOWER_A:
+						result |= BTN_LEFT;
+						break;
+
+					case KB_KEY_RIGHT_ARROW:
+					case KB_KEY_UPPER_D:
+					case KB_KEY_LOWER_D:
+						result |= BTN_RIGHT;
+						break;
+
+					case KB_KEY_ENTER:
+					case KB_KEY_DOWN_SPACE:
+						result |= BTN_CROSS;
+						break;
+
+					case KB_KEY_BACKSPACE:
+					case KB_KEY_ESC:
+						result |= BTN_CIRCLE;
+						break;
+					
+					case KB_KEY_UPPER_R:
+					case KB_KEY_LOWER_R:
+					case KB_KEY_F5:
+						result |= BTN_TRIANGLE;
+						break;
+				}
+			}
+
+			break;
+		}
+	}
+	
 	for(i_for_pad_num = 0; i_for_pad_num < MAX_PADS; i_for_pad_num++){
 
 		if(padinfo.status[i_for_pad_num]){
 			ioPadGetData(i_for_pad_num, &paddata);
-			result = (paddata.button[2] << 8) | (paddata.button[3] & 0xff);
+			result |= (paddata.button[2] << 8) | (paddata.button[3] & 0xff);
 			
 			// accept left analog stick inputs as dpad inputs
 			if (paddata.ANA_L_V < 16)
@@ -178,12 +263,11 @@ unsigned get_button_pressed()
 			if (paddata.ANA_L_H > 224)
 				result |= BTN_RIGHT;
 			
-			return result;
-
+			break;
 		}
 		
 	}
-	return 0;
+	return result;
 }
 
 /*
@@ -1112,8 +1196,9 @@ s32 main(s32 argc, const char* argv[])
 	
 	tiny3d_Init(1024*1024);
 
-	ioPadInit(7);
-
+	ioPadInit(MAX_PORT_NUM);
+	ioKbInit(MAX_KB_PORT_NUM);
+	
 	// Load texture
 	
     LoadTexture();
