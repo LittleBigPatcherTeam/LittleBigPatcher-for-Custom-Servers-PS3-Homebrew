@@ -1,12 +1,13 @@
 #ifndef SAVE_FOLDERS_H_   /* Include guard */
 #define SAVE_FOLDERS_H_
 
-#define VERSION_NUM_STR "v2.011"
+#define VERSION_NUM_STR "v2.012"
 
 #define ROOT_DIR "/dev_hdd0/game/LBPCSPPHB/USRDIR/"
 #define WORKING_DIR ROOT_DIR "temp_files/"
 #define COLOUR_CONFIG_FILE ROOT_DIR "colours_config.txt"
-#define PATCH_LUA_FILE ROOT_DIR "patch.lua"
+#define PATCH_LUA_FILE_NAME "patch.lua"
+#define PATCH_LUA_FILE ROOT_DIR PATCH_LUA_FILE_NAME
 
 #define DEFAULT_URLS "http://lighthouse.lbpunion.com/LITTLEBIGPLANETPS3_XML\n"\
 					 "http://refresh.jvyden.xyz:2095/lbp CustomServerDigest\n"\

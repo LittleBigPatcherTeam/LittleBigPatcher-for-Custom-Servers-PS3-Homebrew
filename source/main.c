@@ -1037,7 +1037,8 @@ void patch_eboot_thread(void *arg)
 	lua_pushstring(L,WORKING_DIR);
 	
     if (lua_pcall(L, 5, 1, 0) != LUA_OK) {
-        dbglogger_log("Error calling function: %s", lua_tostring(L, -1));
+        // gonna pop the error later
+		// dbglogger_log("Error calling function: %s", lua_tostring(L, -1));
 		args->has_finished = 1;
 		sysThreadExit(THREAD_RET_EBOOT_PATCH_FAILED);
     }
@@ -1388,7 +1389,7 @@ s32 main(s32 argc, const char* argv[])
 							break;
 						case THREAD_RET_EBOOT_PATCH_FAILED:
 							error_yet_to_press_ok = 1;
-							sprintf(error_msg,"Could not patch (%s) EBOOT.BIN on%s\nplease report your game",patch_method,pretty_showey);
+							sprintf(error_msg,"Could not patch (%s) EBOOT.BIN on%s\n%s\nplease report your game",patch_method,pretty_showey,lua_tostring(L, -1)+(strlen(PATCH_LUA_FILE)-strlen(PATCH_LUA_FILE_NAME)));
 							current_menu = MENU_PATCH_GAMES;
 							menu_arrow = 0;
 							exit_after_done = 1;
