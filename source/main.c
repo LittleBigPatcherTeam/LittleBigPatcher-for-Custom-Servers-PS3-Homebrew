@@ -1322,17 +1322,49 @@ s32 main(s32 argc, const char* argv[])
 	int method_count = 0;
 	int method_index = 0;
 	
-	load_config();
-	rename(OLD_SAVED_URLS_TXT,NEW_NUM_1_SAVED_URLS_TXT);
-	if (!does_file_exist(NEW_NUM_1_SAVED_URLS_TXT)) {
-		FILE *fp_to_write_placeholder_urls = fopen(NEW_NUM_1_SAVED_URLS_TXT,"wb");
-		if (fp_to_write_placeholder_urls == 0) {
-			return 1;
-		}
-		fwrite(DEFAULT_URLS,1,sizeof(DEFAULT_URLS)-1,fp_to_write_placeholder_urls);
-		fclose(fp_to_write_placeholder_urls);
+	FILE *fp_to_write_placeholder;
+	bool file_no_exist_or_is_empty = 0;
+	
+	fp_to_write_placeholder = fopen(NEW_NUM_1_SAVED_URLS_TXT,"rb");
+	if (fp_to_write_placeholder == 0) {
+		file_no_exist_or_is_empty = 1;
+	}
+	else {
+		fseek(fp_to_write_placeholder, 0, SEEK_END);
+		file_no_exist_or_is_empty = ftell(fp_to_write_placeholder) == 0;
+		fclose(fp_to_write_placeholder);
 	}
 	
+	load_config();
+	rename(OLD_SAVED_URLS_TXT,NEW_NUM_1_SAVED_URLS_TXT);
+	if (file_no_exist_or_is_empty) {
+		fp_to_write_placeholder = fopen(NEW_NUM_1_SAVED_URLS_TXT,"wb");
+		if (fp_to_write_placeholder == 0) {
+			return 1;
+		}
+		fwrite(DEFAULT_URLS,1,sizeof(DEFAULT_URLS)-1,fp_to_write_placeholder);
+		fclose(fp_to_write_placeholder);
+	}
+	
+	fp_to_write_placeholder = fopen(COLOUR_CONFIG_FILE,"rb");
+	if (fp_to_write_placeholder == 0) {
+		file_no_exist_or_is_empty = 1;
+	}
+	else {
+		fseek(fp_to_write_placeholder, 0, SEEK_END);
+		file_no_exist_or_is_empty = ftell(fp_to_write_placeholder) == 0;
+		fclose(fp_to_write_placeholder);
+	}
+	
+	if (file_no_exist_or_is_empty) {
+		fp_to_write_placeholder = fopen(COLOUR_CONFIG_FILE,"wb");
+		if (fp_to_write_placeholder == 0) {
+			return 1;
+		}
+		fwrite(DEFAULT_COLOUR_CONFIG,1,sizeof(DEFAULT_COLOUR_CONFIG)-1,fp_to_write_placeholder);
+		fclose(fp_to_write_placeholder);
+	}
+
 	tiny3d_Init(1024*1024);
 
 	ioPadInit(MAX_PORT_NUM);

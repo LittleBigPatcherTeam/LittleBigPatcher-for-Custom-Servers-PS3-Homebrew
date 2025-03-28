@@ -130,7 +130,6 @@ $(BUILD):
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 	# my_edits this puts the data files needed by oscetool in USRDIR
 	mkdir -p $(CURDIR)/$(BUILD)/pkg/USRDIR
-	cp $(CURDIR)/colours_config.txt $(CURDIR)/$(BUILD)/pkg/USRDIR
 	cp $(CURDIR)/patch.lua $(CURDIR)/$(BUILD)/pkg/USRDIR
 	cp -r $(CURDIR)/oscetool_data $(CURDIR)/$(BUILD)/pkg/USRDIR
 
