@@ -12,6 +12,7 @@
 #include <ppu-types.h>
 
 #include <stdio.h>
+#include <sys/time.h>
 #include <dbglogger.h>
 #include <string.h>
 #include <ctype.h>
@@ -196,7 +197,7 @@ unsigned get_button_pressed()
 	for(i_for_kb_num = 0; i_for_kb_num < MAX_KEYBOARDS; i_for_kb_num++){
 		if(kbinfo.status[i_for_kb_num]){
 			ioKbRead(i_for_kb_num, &kbdata);
-			for(int j_for_kb_num = 0; j_for_kb_num < kbdata.nb_keycode; j_for_kb_num++) {
+			for(j_for_kb_num = 0; j_for_kb_num < kbdata.nb_keycode; j_for_kb_num++) {
 				switch (kbdata.keycode[j_for_kb_num]) {
 					case KB_KEY_UP_ARROW:
 					case KB_KEY_UPPER_W:
@@ -328,14 +329,151 @@ void draw_png(pngData *texture_input, int img_index, int x_coord, int y_coord) {
 	DrawSprites2D(x_coord, y_coord, 1, texture_input->width, texture_input->height, 0xffffffff);
 }
 
+#define U32_SWAP_FOR_COLOUR(num) (u32)num
+
+u32 internal_rainbow_colour_state = 0;
+int internal_rainbow_colour_cur_index = 0;
+/*
+smooth transition for 
+
+#FF0000
+#00FF00
+#0000FF
+#00FFFF
+#FF00FF
+
+100 colours total, for end loop back to red at top
+*/
+const u32 rainbow_colours[] = {
+	U32_SWAP_FOR_COLOUR(0xff0000ff),
+	U32_SWAP_FOR_COLOUR(0xf20d00ff),
+	U32_SWAP_FOR_COLOUR(0xe41b00ff),
+	U32_SWAP_FOR_COLOUR(0xd72800ff),
+	U32_SWAP_FOR_COLOUR(0xc93600ff),
+	U32_SWAP_FOR_COLOUR(0xbc4300ff),
+	U32_SWAP_FOR_COLOUR(0xae5100ff),
+	U32_SWAP_FOR_COLOUR(0xa15e00ff),
+	U32_SWAP_FOR_COLOUR(0x946b00ff),
+	U32_SWAP_FOR_COLOUR(0x867900ff),
+	U32_SWAP_FOR_COLOUR(0x798600ff),
+	U32_SWAP_FOR_COLOUR(0x6b9400ff),
+	U32_SWAP_FOR_COLOUR(0x5ea100ff),
+	U32_SWAP_FOR_COLOUR(0x51ae00ff),
+	U32_SWAP_FOR_COLOUR(0x43bc00ff),
+	U32_SWAP_FOR_COLOUR(0x36c900ff),
+	U32_SWAP_FOR_COLOUR(0x28d700ff),
+	U32_SWAP_FOR_COLOUR(0x1be400ff),
+	U32_SWAP_FOR_COLOUR(0x0df200ff),
+	U32_SWAP_FOR_COLOUR(0x00ff00ff),
+	U32_SWAP_FOR_COLOUR(0x00ff00ff),
+	U32_SWAP_FOR_COLOUR(0x00f20dff),
+	U32_SWAP_FOR_COLOUR(0x00e41bff),
+	U32_SWAP_FOR_COLOUR(0x00d728ff),
+	U32_SWAP_FOR_COLOUR(0x00c936ff),
+	U32_SWAP_FOR_COLOUR(0x00bc43ff),
+	U32_SWAP_FOR_COLOUR(0x00ae51ff),
+	U32_SWAP_FOR_COLOUR(0x00a15eff),
+	U32_SWAP_FOR_COLOUR(0x00946bff),
+	U32_SWAP_FOR_COLOUR(0x008679ff),
+	U32_SWAP_FOR_COLOUR(0x007986ff),
+	U32_SWAP_FOR_COLOUR(0x006b94ff),
+	U32_SWAP_FOR_COLOUR(0x005ea1ff),
+	U32_SWAP_FOR_COLOUR(0x0051aeff),
+	U32_SWAP_FOR_COLOUR(0x0043bcff),
+	U32_SWAP_FOR_COLOUR(0x0036c9ff),
+	U32_SWAP_FOR_COLOUR(0x0028d7ff),
+	U32_SWAP_FOR_COLOUR(0x001be4ff),
+	U32_SWAP_FOR_COLOUR(0x000df2ff),
+	U32_SWAP_FOR_COLOUR(0x0000ffff),
+	U32_SWAP_FOR_COLOUR(0x0000ffff),
+	U32_SWAP_FOR_COLOUR(0x000dffff),
+	U32_SWAP_FOR_COLOUR(0x001bffff),
+	U32_SWAP_FOR_COLOUR(0x0028ffff),
+	U32_SWAP_FOR_COLOUR(0x0036ffff),
+	U32_SWAP_FOR_COLOUR(0x0043ffff),
+	U32_SWAP_FOR_COLOUR(0x0051ffff),
+	U32_SWAP_FOR_COLOUR(0x005effff),
+	U32_SWAP_FOR_COLOUR(0x006bffff),
+	U32_SWAP_FOR_COLOUR(0x0079ffff),
+	U32_SWAP_FOR_COLOUR(0x0086ffff),
+	U32_SWAP_FOR_COLOUR(0x0094ffff),
+	U32_SWAP_FOR_COLOUR(0x00a1ffff),
+	U32_SWAP_FOR_COLOUR(0x00aeffff),
+	U32_SWAP_FOR_COLOUR(0x00bcffff),
+	U32_SWAP_FOR_COLOUR(0x00c9ffff),
+	U32_SWAP_FOR_COLOUR(0x00d7ffff),
+	U32_SWAP_FOR_COLOUR(0x00e4ffff),
+	U32_SWAP_FOR_COLOUR(0x00f2ffff),
+	U32_SWAP_FOR_COLOUR(0x00ffffff),
+	U32_SWAP_FOR_COLOUR(0x00ffffff),
+	U32_SWAP_FOR_COLOUR(0x0df2ffff),
+	U32_SWAP_FOR_COLOUR(0x1be4ffff),
+	U32_SWAP_FOR_COLOUR(0x28d7ffff),
+	U32_SWAP_FOR_COLOUR(0x36c9ffff),
+	U32_SWAP_FOR_COLOUR(0x43bcffff),
+	U32_SWAP_FOR_COLOUR(0x51aeffff),
+	U32_SWAP_FOR_COLOUR(0x5ea1ffff),
+	U32_SWAP_FOR_COLOUR(0x6b94ffff),
+	U32_SWAP_FOR_COLOUR(0x7986ffff),
+	U32_SWAP_FOR_COLOUR(0x8679ffff),
+	U32_SWAP_FOR_COLOUR(0x946bffff),
+	U32_SWAP_FOR_COLOUR(0xa15effff),
+	U32_SWAP_FOR_COLOUR(0xae51ffff),
+	U32_SWAP_FOR_COLOUR(0xbc43ffff),
+	U32_SWAP_FOR_COLOUR(0xc936ffff),
+	U32_SWAP_FOR_COLOUR(0xd728ffff),
+	U32_SWAP_FOR_COLOUR(0xe41bffff),
+	U32_SWAP_FOR_COLOUR(0xf20dffff),
+	U32_SWAP_FOR_COLOUR(0xff00ffff),
+	U32_SWAP_FOR_COLOUR(0xff00ffff),
+	U32_SWAP_FOR_COLOUR(0xff00f2ff),
+	U32_SWAP_FOR_COLOUR(0xff00e4ff),
+	U32_SWAP_FOR_COLOUR(0xff00d7ff),
+	U32_SWAP_FOR_COLOUR(0xff00c9ff),
+	U32_SWAP_FOR_COLOUR(0xff00bcff),
+	U32_SWAP_FOR_COLOUR(0xff00aeff),
+	U32_SWAP_FOR_COLOUR(0xff00a1ff),
+	U32_SWAP_FOR_COLOUR(0xff0094ff),
+	U32_SWAP_FOR_COLOUR(0xff0086ff),
+	U32_SWAP_FOR_COLOUR(0xff0079ff),
+	U32_SWAP_FOR_COLOUR(0xff006bff),
+	U32_SWAP_FOR_COLOUR(0xff005eff),
+	U32_SWAP_FOR_COLOUR(0xff0051ff),
+	U32_SWAP_FOR_COLOUR(0xff0043ff),
+	U32_SWAP_FOR_COLOUR(0xff0036ff),
+	U32_SWAP_FOR_COLOUR(0xff0028ff),
+	U32_SWAP_FOR_COLOUR(0xff001bff),
+	U32_SWAP_FOR_COLOUR(0xff000dff),
+};
+#define RAINBOW_LAST_INDEX (sizeof(rainbow_colours) / sizeof(rainbow_colours[0]))-1
+
+u32 get_next_rainbow_colour() {
+	struct timeval current_time;
+	gettimeofday(&current_time,NULL);
+	if (((u32)current_time.tv_usec - internal_rainbow_colour_state) >= (1000*10)) {
+		internal_rainbow_colour_state = (u32)current_time.tv_usec;
+		internal_rainbow_colour_cur_index++;
+	}
+	if (internal_rainbow_colour_cur_index > RAINBOW_LAST_INDEX) {
+		internal_rainbow_colour_cur_index = 0;
+	}
+	return rainbow_colours[internal_rainbow_colour_cur_index];
+}
+
+
+#define SetFontColor(font_colour_in, bg_colour_in) SetFontColor((font_colour_in == 522001152) ? rainbow_colour : font_colour_in, (bg_colour_in == 522001152) ? rainbow_colour : bg_colour_in)
+
 void drawScene(u8 current_menu,int menu_arrow, bool is_alive_toggle_thing, u8 error_yet_to_press_ok, char* error_msg, int yes_no_game_popup, int started_a_thread, int thread_current_state,
 pngData *texture_input, int * img_index, u8 saved_urls_txt_num, bool normalise_digest_checked, struct TitleIdAndGameName browse_games_buffer[], u32 browse_games_buffer_size, u32 browse_games_buffer_start,char * global_title_id,
 int method_count, struct LuaPatchDetails patch_lua_names[]
 )
 {
+	u32 rainbow_colour;
 	float x, y;
 	int bg_colour;
 	int font_colour;
+	
+	rainbow_colour = get_next_rainbow_colour();
 	
     tiny3d_Project2D(); // change to 2D context (remember you it works with 848 x 512 as virtual coordinates)
     DrawBackground2D(BACKGROUND_COLOUR); 
