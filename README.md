@@ -219,7 +219,7 @@ command was taken from [UnionPatcher](https://github.com/LBPUnion/UnionPatcher/b
 <div id='section-id-113'/>
 
 ## Patching method for main series
-besides the types, you can check out patching_eboot_elf_code.c and patching_eboot_elf_code.h to see the code that patches the EBOOT.ELF, It will work fine building it normally and outside this project, not coupled to this project. Although i did say you dont need any programming knowledge so ill explain it here<br/><br/>
+patch.lua is the code used for patching the eboot.elf, and also works outside of this project, if you'll like to know more about how the lua code works, refer to [Adding your own patch method](#using-the-lua-api). Although i did say you dont need any programming knowledge so ill explain it here<br/><br/>
 The code is based of [this regex](https://github.com/LBPUnion/UnionPatcher/blob/c45b9ec37eedade40490a1c000311b099ed71f31/UnionPatcher/Patcher.cs#L53) `"http?[^\x00]*?LITTLEBIGPLANETPS(3|P)_XML\x00*"` although i did not use regex and just took the idea from it.<br/>
 it first looks through the eboot.elf to find any `http` strings, if it finds any, it makes sure that the string starting with `http` ends with `LITTLEBIGPLANETPS3_xml` or `LITTLEBIGPLANETPSP_xml`. if it indeed does, then it calculates how much null bytes it will need to write, and makes sure the user url fits in that size, otherwise it will fail<br/><br/>
 <div id='section-id-117'/>
