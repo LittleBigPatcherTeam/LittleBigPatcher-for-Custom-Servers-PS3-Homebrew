@@ -503,7 +503,15 @@ static uint8_t *load_rap(const uint8_t *content_id) {
   if (does_file_exist(tmpfilename)) {
 	goto found_a_rap;
   }
-  
+  sprintf(tmpfilename, "/dev_usb006/exdata/%s%s", content_id, SCE_DATA_RAPEXT); 
+  if (does_file_exist(tmpfilename)) {
+	goto found_a_rap;
+  }
+  sprintf(tmpfilename, "/dev_usb007/exdata/%s%s", content_id, SCE_DATA_RAPEXT); 
+  if (does_file_exist(tmpfilename)) {
+	goto found_a_rap;
+  }
+
   found_a_rap: ;
   uint8_t *rap = _read_rap_buffer(tmpfilename, &size);
   if (!rap) {
