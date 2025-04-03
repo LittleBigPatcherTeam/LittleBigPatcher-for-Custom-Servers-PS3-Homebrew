@@ -131,6 +131,8 @@ $(BUILD):
 	# my_edits this puts the data files needed by oscetool in USRDIR
 	mkdir -p $(CURDIR)/$(BUILD)/pkg/USRDIR
 	cp $(CURDIR)/patch.lua $(CURDIR)/$(BUILD)/pkg/USRDIR
+	cp $(CURDIR)/vita_test_patch_file.velf $(CURDIR)/$(BUILD)/pkg/USRDIR
+	cp $(CURDIR)/ps3_test_patch_file.elf $(CURDIR)/$(BUILD)/pkg/USRDIR
 	cp -r $(CURDIR)/oscetool_data $(CURDIR)/$(BUILD)/pkg/USRDIR
 
 #---------------------------------------------------------------------------------
