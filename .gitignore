@@ -1,6 +1,7 @@
 build/
 
 *.elf
+!ps3_test_patch_file.elf
 *.self
 *.pkg
 *.elf

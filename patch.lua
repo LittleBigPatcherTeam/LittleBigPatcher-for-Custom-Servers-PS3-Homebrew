@@ -433,6 +433,76 @@ function patch_vita_lbp_vita_cross_controller(eboot_elf_path, url, digest, norma
 	return internal_patch_lbp_main(eboot_elf_path, url, digest, normalise_digest, working_dir, true, true)
 end
 
+patch_method_vita_test_patch = "Test patch. If you chose the correct game, it should error on open"
+---@param eboot_elf_path string
+---@param url string
+---@param digest string
+---@param normalise_digest boolean
+---@param working_dir string
+---@return boolean
+function patch_vita_test_patch(eboot_elf_path, url, digest, normalise_digest, working_dir)
+	local file = io.open("app0:/vita_test_patch_file.velf", "rb")
+	if not file then
+		error("could not open app0:/vita_test_patch_file.velf")
+	end
+	local is_function_succeed, result = pcall(function()
+		return file:read()
+	end)
+	file:close()
+	if not is_function_succeed then
+		error(result)
+	end
+
+	local file_input_elf = io.open(eboot_elf_path, "wb")
+	if not file_input_elf then
+		error(eboot_elf_path .. " was not found")
+	end
+	local is_function_succeed_2, result_2 = pcall(function()
+		return file_input_elf:write(result)
+	end)
+	file_input_elf:close()
+	if not is_function_succeed_2 then
+		error(result_2)
+	end
+	
+	return true
+end
+
+patch_method_ps3_test_patch = "Test patch. If you chose the correct game, it should quit on open automatically"
+---@param eboot_elf_path string
+---@param url string
+---@param digest string
+---@param normalise_digest boolean
+---@param working_dir string
+---@return boolean
+function patch_ps3_test_patch(eboot_elf_path, url, digest, normalise_digest, working_dir)
+	local file = io.open("/dev_hdd0/game/LBPCSPPHB/USRDIR/ps3_test_patch_file.elf", "rb")
+	if not file then
+		error("could not open /dev_hdd0/game/LBPCSPPHB/USRDIR/ps3_test_patch_file.elf")
+	end
+	local is_function_succeed, result = pcall(function()
+		return file:read()
+	end)
+	file:close()
+	if not is_function_succeed then
+		error(result)
+	end
+
+	local file_input_elf = io.open(eboot_elf_path, "wb")
+	if not file_input_elf then
+		error(eboot_elf_path .. " was not found")
+	end
+	local is_function_succeed_2, result_2 = pcall(function()
+		return file_input_elf:write(result)
+	end)
+	file_input_elf:close()
+	if not is_function_succeed_2 then
+		error(result_2)
+	end
+	
+	return true
+end
+
 function example_usage()
 	patch_lbp_main("EBOOT.ELF", "http://lnfinite.site/LITTLEBIGPLANETPS3_XML", "", true, "./")
 end
