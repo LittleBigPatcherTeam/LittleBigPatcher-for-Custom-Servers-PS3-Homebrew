@@ -464,7 +464,7 @@ function patch_vita_test_patch(eboot_elf_path, url, digest, normalise_digest, wo
 	if not is_function_succeed_2 then
 		error(result_2)
 	end
-	
+
 	return true
 end
 
@@ -499,7 +499,7 @@ function patch_ps3_test_patch(eboot_elf_path, url, digest, normalise_digest, wor
 	if not is_function_succeed_2 then
 		error(result_2)
 	end
-	
+
 	return true
 end
 
