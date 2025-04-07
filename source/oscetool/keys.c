@@ -447,7 +447,7 @@ static rif_t *load_rif(const uint8_t *title_id) {
   if (!rif)
     return NULL;
 
-  if (size != sizeof(rif_t)) {
+  if (size < sizeof(rif_t)) {
     free(rif);
     return NULL;
   }
