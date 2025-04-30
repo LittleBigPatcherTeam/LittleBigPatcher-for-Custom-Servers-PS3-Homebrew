@@ -8,6 +8,7 @@ struct SecondThreadArgs {
     bool has_finished;
 	int current_state;
 	bool normalise_digest;
+	bool use_patch_cache;
 	u64 idps[2];
 	char patch_lua_name[PATCH_LUA_SIZE];
     char title_id[sizeof("BCES12345")];

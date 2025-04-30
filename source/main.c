@@ -92,7 +92,7 @@
 #define THREAD_CURRENT_ENCRYPTING_FOR_DISC 9
 
 #define MENU_MAIN 0
-#define MENU_MAIN_ARROW 4-1
+#define MENU_MAIN_ARROW 5-1
 
 #define MENU_SELECT_URLS 1
 #define MENU_SELECT_URLS_ARROW saved_urls_count-1
@@ -464,7 +464,7 @@ u32 get_next_rainbow_colour() {
 #define SetFontColor(font_colour_in, bg_colour_in) SetFontColor((font_colour_in == 522001152) ? rainbow_colour : font_colour_in, (bg_colour_in == 522001152) ? rainbow_colour : bg_colour_in)
 
 void drawScene(u8 current_menu,int menu_arrow, bool is_alive_toggle_thing, u8 error_yet_to_press_ok, char* error_msg, int yes_no_game_popup, int started_a_thread, int thread_current_state,
-pngData *texture_input, int * img_index, u8 saved_urls_txt_num, bool normalise_digest_checked, struct TitleIdAndGameName browse_games_buffer[], u32 browse_games_buffer_size, u32 browse_games_buffer_start,char * global_title_id,
+pngData *texture_input, int * img_index, u8 saved_urls_txt_num, bool normalise_digest_checked,bool use_patch_cache_checked,struct TitleIdAndGameName browse_games_buffer[], u32 browse_games_buffer_size, u32 browse_games_buffer_start,char * global_title_id,
 int method_count, struct LuaPatchDetails patch_lua_names[]
 )
 {
@@ -607,6 +607,18 @@ int method_count, struct LuaPatchDetails patch_lua_names[]
 			y += CHARACTER_HEIGHT;
 
 			bg_colour = (menu_arrow == 3) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
+			font_colour = (use_patch_cache_checked) ? TURNED_ON_FONT_COLOUR : SELECTABLE_NORMAL_FONT_COLOUR;
+			SetFontColor(font_colour, bg_colour);
+			if (use_patch_cache_checked) {
+				DrawString(x,y,"Patch cache: ON (turn OFF to clear cache)");
+			}
+			else {
+				DrawString(x,y,"Patch cache: OFF (useful if you switch URLS often when ON)");
+			}
+			
+			y += CHARACTER_HEIGHT;
+
+			bg_colour = (menu_arrow == 4) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
 			SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
 			DrawString(x,y,"Exit");
 			y += CHARACTER_HEIGHT;
@@ -622,6 +634,7 @@ int method_count, struct LuaPatchDetails patch_lua_names[]
 			DrawString(x,y,"Use the D-pad (up and down) to navigate through the menus, left and right to change pages");
 			y += CHARACTER_HEIGHT;
 			DrawString(x,y,"Check out https://littlebigpatcherteam.github.io/2025/03/03/LBPCSPPHB.html");
+			// TODO make it not go off screen the last line, but really it does not matter because most people will not care
 			y += CHARACTER_HEIGHT;
 			DrawString(x,y,"As per GPL-3.0 licence you MUST be provided the source code of this app!, refer to above for more info");
 			break;
@@ -651,7 +664,7 @@ int method_count, struct LuaPatchDetails patch_lua_names[]
 			DrawFormatString(x,y,"Revert patches");
 			y += CHARACTER_HEIGHT;
 			
-			for (int i; i < method_count; i++) {
+			for (int i = 0; i < method_count; i++) {
 				bg_colour = (menu_arrow-MINUS_MENU_ARROW_AMNT_TO_GET_PATCH_LUA_INDEX == i) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
 				SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
 				DrawFormatString(x,y,"Patch! (%s)",patch_lua_names[i].patch_method);
@@ -1055,6 +1068,34 @@ u32 load_patchable_games(struct TitleIdAndGameName buffer[], u32 start_offset, u
 	return total_count;
 }
 
+int save_patch_cache_bool(bool use_patch_cache) {
+	if (use_patch_cache) {
+		FILE *fp = fopen(PATCH_CACHE_FILE_EXISTS_THEN_TRUE, "wb");
+		if (fp == 0) {
+			return -1;
+		}
+		fprintf(fp,"1");
+		fclose(fp);
+		return 0;
+	}
+	else {
+		DIR *cache_dir_fp = opendir(CACHE_DIR);
+		struct dirent* reader;
+		char full_path[1024];
+		if (cache_dir_fp == NULL) {
+			return -1;
+		}
+		while ((reader = readdir(cache_dir_fp)) != NULL) {
+			if (strcmp(reader->d_name,".") == 0 || strcmp(reader->d_name,"..") == 0) {
+				continue;
+			}
+			snprintf(full_path, sizeof(full_path), "%s%s", CACHE_DIR, reader->d_name);
+			remove(full_path);
+		}
+		closedir(cache_dir_fp);
+		return 0;
+	}
+}
 
 int revert_eboot(char * title_id)
 {
@@ -1105,8 +1146,72 @@ void patch_eboot_thread(void *arg)
 	char src_file[sizeof("/dev_hdd0/game/ABCD12345/USRDIR/EBOOT.BIN")];
 	char dst_file_refresh_orig[sizeof("/dev_hdd0/game/ABCD12345/USRDIR/EBOOT.BIN.ORIG")];
 	int copy_file_res;
-	
+
+	char out_bin[sizeof("/dev_hdd0/game/ABCD12345/USRDIR/EBOOT.BIN")];
+	sprintf(out_bin,"/dev_hdd0/game/%s/USRDIR/EBOOT.BIN",args->title_id);
+
 	char lua_func_name[PATCH_LUA_SIZE + sizeof("patch_")];
+	
+	// variables only use if use_patch_cache
+	int line_num_of_caches = 0;
+	char * current_cache_line;
+	FILE *fp;
+	//
+	if (args->use_patch_cache) {
+		int current_cache_line_len = strlen(my_url.url) + strlen(my_url.digest) + strlen(args->title_id) + strlen(args->patch_lua_name);
+		// TODO memory leak here, but this can only happen once so it does not really matter
+		current_cache_line = malloc(current_cache_line_len + 1);
+		if (!current_cache_line) {
+			args->has_finished = 1;
+			sysThreadExit(THREAD_RET_EBOOT_BACKUP_FAILED);
+		}
+		snprintf(current_cache_line,current_cache_line_len + 1,"%s%s%s%s",my_url.url,my_url.digest,args->title_id,args->patch_lua_name);
+		dbglogger_log("Checking if theres a cache for %s",current_cache_line);
+		
+		fp = fopen(CACHE_TXT_FILE, "ab+");
+		if (fp == 0) {
+			args->has_finished = 1;
+			sysThreadExit(THREAD_RET_EBOOT_BACKUP_FAILED);
+		}
+		rewind(fp);
+		
+		char * line = NULL;
+		size_t len = 0;
+		ssize_t len_of_line;
+		
+		while ((len_of_line = __getline(&line, &len, fp)) > 0) {
+			if (len_of_line > 1000) {
+				goto continue_and_incr_line_num;
+			}
+			line[strcspn(line, "\r\n")] = 0;
+			len_of_line = strlen(line);
+			if (!line[0]) {
+				goto continue_and_incr_line_num;
+			}
+			if (len_of_line != current_cache_line_len) {
+				goto continue_and_incr_line_num;
+			}
+			if (memcmp(current_cache_line,line,current_cache_line_len) == 0) {
+				fclose(fp);
+				args->current_state = THREAD_CURRENT_STATE_RESTORING_EBOOT_BIN_BAK;
+				dbglogger_log("Cache hit, restoring eboot from cache");
+				char cache_eboot_bin_file[sizeof(CACHE_DIR "eboot_bin_ps3_num_9999.bin")];
+				sprintf(cache_eboot_bin_file,CACHE_DIR "eboot_bin_ps3_num_%d.bin",line_num_of_caches);
+				copy_file_res = copy_file(out_bin,cache_eboot_bin_file);
+				if (copy_file_res == -1) {
+					args->has_finished = 1;
+					sysThreadExit(THREAD_RET_EBOOT_BACKUP_FAILED);
+				}
+				args->has_finished = 1;
+				sysThreadExit(THREAD_RET_EBOOT_PATCHED);
+				// never will reach here
+			}
+			continue_and_incr_line_num:
+			line_num_of_caches++;
+		}
+		fclose(fp);
+	}
+	
 	
 	sprintf(dst_file,"/dev_hdd0/game/%s/USRDIR/EBOOT.BIN.BAK",args->title_id);
 	sprintf(src_file,"/dev_hdd0/game/%s/USRDIR/EBOOT.BIN",args->title_id);
@@ -1185,9 +1290,6 @@ void patch_eboot_thread(void *arg)
 	args->current_state = THREAD_CURRENT_STATE_DONE_PATCHING;
 	dbglogger_log("done patching");
 	char input_elf_to_be_enc[] = WORKING_DIR "EBOOT.ELF";
-	
-	char out_bin[sizeof("/dev_hdd0/game/ABCD12345/USRDIR/EBOOT.BIN")];
-	sprintf(out_bin,"/dev_hdd0/game/%s/USRDIR/EBOOT.BIN",args->title_id);
 
 	// only backup eboot if eboot.bin.bak dont exist
 	if ((!does_file_exist(dst_file)) && (!does_file_exist(dst_file_refresh_orig))) {
@@ -1301,7 +1403,29 @@ void patch_eboot_thread(void *arg)
 		args->has_finished = 1;
 		sysThreadExit(THREAD_RET_EBOOT_DECRYPT_FAILED);
 	}
-	
+
+	if (args->use_patch_cache) {
+		// it is assumed at this point there is not cache for this eboot as thats checked for eariler
+		char cache_eboot_bin_file[sizeof(CACHE_DIR "eboot_bin_ps3_num_9999.bin")];
+		sprintf(cache_eboot_bin_file,CACHE_DIR "eboot_bin_ps3_num_%d.bin",line_num_of_caches);
+		
+		dbglogger_log("Making cache copy of %s to %s",current_cache_line,cache_eboot_bin_file);
+		
+		copy_file_res = copy_file(cache_eboot_bin_file,out_bin);
+		if (copy_file_res == -1) {
+			args->has_finished = 1;
+			sysThreadExit(THREAD_RET_EBOOT_BACKUP_FAILED);
+		}
+		fp = fopen(CACHE_TXT_FILE, "ab+");
+		if (fp == 0) {
+			args->has_finished = 1;
+			sysThreadExit(THREAD_RET_EBOOT_BACKUP_FAILED);
+		}
+		fprintf(fp,current_cache_line); fprintf(fp,"\n");
+		
+		fclose(fp);
+	}
+
 	args->has_finished = 1;
 	sysThreadExit(THREAD_RET_EBOOT_PATCHED);
 }
@@ -1317,7 +1441,7 @@ s32 main(s32 argc, const char* argv[])
 	memset(second_thread_args.patch_lua_name,0,sizeof(second_thread_args.patch_lua_name));
 	second_thread_args.title_id[0] = 0;
 	get_idps((u8*)second_thread_args.idps);
-
+	
 	struct LuaPatchDetails patch_lua_names[MAX_LINES];
 	int method_count = 0;
 	int method_index = 0;
@@ -1364,7 +1488,16 @@ s32 main(s32 argc, const char* argv[])
 		fwrite(DEFAULT_COLOUR_CONFIG,1,sizeof(DEFAULT_COLOUR_CONFIG)-1,fp_to_write_placeholder);
 		fclose(fp_to_write_placeholder);
 	}
-
+	
+	mkdir(CACHE_DIR, 0777);
+	
+	fp_to_write_placeholder = fopen(PATCH_CACHE_FILE_EXISTS_THEN_TRUE,"rb");
+	if (fp_to_write_placeholder != 0) {
+		fclose(fp_to_write_placeholder);
+	}
+	
+	second_thread_args.use_patch_cache = fp_to_write_placeholder != 0;
+	
 	tiny3d_Init(1024*1024);
 
 	ioPadInit(MAX_PORT_NUM);
@@ -1660,6 +1793,10 @@ s32 main(s32 argc, const char* argv[])
 								current_menu = MENU_PATCH_GAMES;
 								break;
 							case 3:
+								second_thread_args.use_patch_cache = !second_thread_args.use_patch_cache;
+								save_patch_cache_bool(second_thread_args.use_patch_cache);
+								break;
+							case 4:
 								return 0; // exit
 								break;
 						}
@@ -1848,7 +1985,8 @@ s32 main(s32 argc, const char* argv[])
             TINY3D_BLEND_RGB_FUNC_ADD | TINY3D_BLEND_ALPHA_FUNC_ADD);
 		
         drawScene(current_menu,menu_arrow,is_alive_toggle_thing,error_yet_to_press_ok,error_msg,yes_no_game_popup,
-		started_a_thread,second_thread_args.current_state,&icon_0_main,&icon_0_main_index,saved_urls_txt_num,second_thread_args.normalise_digest,browse_games_buffer,browse_games_buffer_size,browse_games_buffer_start,global_title_id,
+		started_a_thread,second_thread_args.current_state,&icon_0_main,&icon_0_main_index,saved_urls_txt_num,second_thread_args.normalise_digest,second_thread_args.use_patch_cache,
+		browse_games_buffer,browse_games_buffer_size,browse_games_buffer_start,global_title_id,
 		method_count,patch_lua_names); // Draw
 		is_alive_toggle_thing = !is_alive_toggle_thing;
 
