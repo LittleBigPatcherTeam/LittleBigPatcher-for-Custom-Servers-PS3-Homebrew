@@ -7,6 +7,7 @@
 
 #include <io/pad.h>
 #include <io/kb.h> 
+#include <sysutil/sysutil.h>
 
 #include <sys/thread.h>
 #include <ppu-types.h>
@@ -49,8 +50,11 @@
 #define BTN_L3         512
 #define BTN_SELECT     256  
 #define BTN_SQUARE     128
-#define BTN_CROSS      64
-#define BTN_CIRCLE     32
+
+// globals instead of macros because we need to swap them in init if the user has circle for enter
+int BTN_CROSS;
+int BTN_CIRCLE;
+
 #define BTN_TRIANGLE   16
 #define BTN_R1         8
 #define BTN_L1         4
@@ -112,10 +116,13 @@
 #define YES_NO_GAME_POPUP_REVERT_EBOOT 1
 #define YES_NO_GAME_POPUP_PATCH_GAME 2
 
-#define MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CROSS_BTN "\x86"
+
+// globals instead of macros because we need to swap them in init if the user has circle for enter
+char MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CROSS_BTN[3];
+char MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CIRCLE_BTN[3];
+
 #define MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_SQUARE_BTN "\x87"
 #define MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_TRIANGLE_BTN "\x89"
-#define MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CIRCLE_BTN "\xB9"//"\x88"
 
 #define DEFAULT_TITLE_ID "BCES00000"
 
@@ -158,7 +165,7 @@ void exiting()
     sysModuleUnload(SYSMODULE_PNGDEC);
 }
 
-unsigned get_button_pressed()
+unsigned get_button_pressed(int enter_button)
 {
 	// no clue what these are, utf-16 codes?
 	#define KB_KEY_RIGHT_ARROW 0x804F
@@ -225,12 +232,22 @@ unsigned get_button_pressed()
 
 					case KB_KEY_ENTER:
 					case KB_KEY_DOWN_SPACE:
-						result |= BTN_CROSS;
+						if (enter_button == 1) {
+							result |= BTN_CROSS;
+						}
+						else {
+							result |= BTN_CIRCLE;
+						}
 						break;
 
 					case KB_KEY_BACKSPACE:
 					case KB_KEY_ESC:
-						result |= BTN_CIRCLE;
+						if (enter_button == 1) {
+							result |= BTN_CIRCLE;
+						}
+						else {
+							result |= BTN_CROSS;
+						}
 						break;
 					
 					case KB_KEY_UPPER_R:
@@ -497,7 +514,7 @@ int method_count, struct LuaPatchDetails patch_lua_names[]
 		DrawFormatString(x,y,error_msg);
 		y += CHARACTER_HEIGHT*8; // give a bunch of space for title
 		SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, SELECTED_FONT_BG_COLOUR);
-		DrawFormatString(x,y,"Press "MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CROSS_BTN" to continue");
+		DrawFormatString(x,y,"Press %s to continue",MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CROSS_BTN);
 		draw_png(texture_input,*img_index,DRAW_ICON_0_MAIN_PNG_X,DRAW_ICON_0_MAIN_PNG_Y);
 		return;
 	}
@@ -627,9 +644,9 @@ int method_count, struct LuaPatchDetails patch_lua_names[]
 			DrawString(x,y,"Things will have this font colour if it is selected");
 			y += CHARACTER_HEIGHT;
 			SetFontColor(TITLE_FONT_COLOUR,TITLE_BG_COLOUR);
-			DrawString(x,y,"Press "MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CROSS_BTN" to enter menus and select things");
+			DrawFormatString(x,y,"Press %s to enter menus and select things",MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CROSS_BTN);
 			y += CHARACTER_HEIGHT;
-			DrawString(x,y,"Press "MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CIRCLE_BTN" to go back to the previous menu");
+			DrawFormatString(x,y,"Press %s to go back to the previous menu",MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CIRCLE_BTN);
 			y += CHARACTER_HEIGHT;
 			DrawString(x,y,"Use the D-pad (up and down) to navigate through the menus, left and right to change pages");
 			y += CHARACTER_HEIGHT;
@@ -1541,6 +1558,7 @@ s32 main(s32 argc, const char* argv[])
 	bool has_done_a_switch = 1;
 	unsigned my_btn;
 	unsigned old_btn = 0;
+	int enter_button = 1;
 	u8 current_menu = MENU_MAIN;
 	int menu_arrow = 0;
 	u8 saved_urls_txt_num = 1;
@@ -1551,7 +1569,23 @@ s32 main(s32 argc, const char* argv[])
 	u32 browse_games_buffer_max_size = MAX_LINES;
 	u32 browse_games_buffer_size = 0;
 	struct TitleIdAndGameName browse_games_buffer[browse_games_buffer_max_size];
-	
+
+
+	sysUtilGetSystemParamInt(SYSUTIL_SYSTEMPARAM_ID_ENTER_BUTTON_ASSIGN, &enter_button);
+	if (enter_button == 1) {
+		BTN_CIRCLE = 32;
+		BTN_CROSS = 64;
+		strcpy(MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CROSS_BTN,"\x86");
+		strcpy(MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CIRCLE_BTN,"\xb9");//"\x88"
+	}
+	else {
+		BTN_CIRCLE = 64;
+		BTN_CROSS = 32;
+		strcpy(MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CIRCLE_BTN,"\x86");
+		strcpy(MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CROSS_BTN,"\xb9");//"\x88"
+	}
+
+
 	// lua setup
 	L = luaL_newstate();
 	luaL_openlibs(L);
@@ -1624,7 +1658,7 @@ s32 main(s32 argc, const char* argv[])
 	// Ok, everything is setup. Now for the main loop.
 	while(1) {
 		// menu control logic
-		my_btn = get_button_pressed();
+		my_btn = get_button_pressed(enter_button);
 		if (!(my_btn & old_btn)) {
 			// special menus, popups
 			if (error_yet_to_press_ok) {
