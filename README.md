@@ -388,6 +388,11 @@ then you can run the python script in python3 `python3 build.py` in order to bui
 
 ### for backup decrypt if the oscetool decrypt fails
 
+## [Patchwork 1.0](https://github.com/HugeSpaceship/Patchwork)
+Implementation of "join keys" is based of, as well as user agent convention
+## regg2
+Mysterious Discord user who came up with the idea of editing the network xxtea keys
+
 <div id='lua-credit'/>
 
 ## [Lua](https://www.lua.org/ftp/lua-5.4.7.tar.gz)
