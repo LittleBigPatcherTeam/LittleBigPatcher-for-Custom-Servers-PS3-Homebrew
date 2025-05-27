@@ -12,6 +12,7 @@ struct SecondThreadArgs {
     bool has_finished;
 	int current_state;
 	bool normalise_digest;
+	char join_password[0x10+1];
 	bool use_patch_cache;
 	u64 idps[2];
 	char patch_lua_name[256];

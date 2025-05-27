@@ -1,7 +1,7 @@
 #ifndef SAVE_FOLDERS_H_   /* Include guard */
 #define SAVE_FOLDERS_H_
 
-#define VERSION_NUM_STR "v2.020"
+#define VERSION_NUM_STR "v2.021"
 
 #define ROOT_DIR "/dev_hdd0/game/LBPCSPPHB/USRDIR/"
 #define WORKING_DIR ROOT_DIR "temp_files/"
@@ -36,5 +36,6 @@
 
 
 #define TITLE_ID_TXT ROOT_DIR "title_id_to_patch.txt"
+#define JOIN_PASSWORD_TXT ROOT_DIR "SECRET_DONT_SHARE_join_key.txt"
 
 #endif // SAVE_FOLDERS_H_

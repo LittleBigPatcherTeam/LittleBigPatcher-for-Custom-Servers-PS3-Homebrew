@@ -104,7 +104,7 @@ int BTN_CIRCLE;
 #define MENU_EDIT_URLS 2
 #define MENU_EDIT_URLS_ARROW (saved_urls_count-1)*2+1
 
-#define MENU_PATCH_GAMES_ARROW_NOT_INCL_PATCHES 4-1
+#define MENU_PATCH_GAMES_ARROW_NOT_INCL_PATCHES 5-1
 #define MINUS_MENU_ARROW_AMNT_TO_GET_PATCH_LUA_INDEX MENU_PATCH_GAMES_ARROW_NOT_INCL_PATCHES + 1
 #define MENU_PATCH_GAMES_ARROW MENU_PATCH_GAMES_ARROW_NOT_INCL_PATCHES+method_count
 #define MENU_PATCH_GAMES 3
@@ -128,7 +128,7 @@ char MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CIRCLE_BTN[3];
 
 #define CAUSE_A_PS3_FREEZE *(int*)0x69 = 0
 
-#define DONE_A_SWITCH has_done_a_switch = 1; load_global_title_id()
+#define DONE_A_SWITCH has_done_a_switch = 1; load_global_title_id(); load_user_join_pwd(second_thread_args.join_password)
 
 padInfo padinfo;
 padData paddata;
@@ -482,7 +482,8 @@ u32 get_next_rainbow_colour() {
 
 void drawScene(u8 current_menu,int menu_arrow, bool is_alive_toggle_thing, u8 error_yet_to_press_ok, char* error_msg, int yes_no_game_popup, int started_a_thread, int thread_current_state,
 pngData *texture_input, int * img_index, u8 saved_urls_txt_num, bool normalise_digest_checked,bool use_patch_cache_checked,struct TitleIdAndGameName browse_games_buffer[], u32 browse_games_buffer_size, u32 browse_games_buffer_start,char * global_title_id,
-int method_count, struct LuaPatchDetails patch_lua_names[]
+int method_count, struct LuaPatchDetails patch_lua_names[],
+char * join_password
 )
 {
 	u32 rainbow_colour;
@@ -680,7 +681,19 @@ int method_count, struct LuaPatchDetails patch_lua_names[]
 			SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
 			DrawFormatString(x,y,"Revert patches");
 			y += CHARACTER_HEIGHT;
+
+			bg_colour = (menu_arrow == 4) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
+			SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
+			DrawFormatString(x,y,"Join key: ");
+			if (join_password[0] == 0) {
+				DrawFormatString(GetFontX(),y,"Randomised (no one can join you)");
+			}
+			else {
+				DrawFormatString(GetFontX(),y,join_password);
+			}
 			
+			y += CHARACTER_HEIGHT;
+
 			for (int i = 0; i < method_count; i++) {
 				bg_colour = (menu_arrow-MINUS_MENU_ARROW_AMNT_TO_GET_PATCH_LUA_INDEX == i) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
 				SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
@@ -794,6 +807,34 @@ bool is_valid_title_id(char* title_id) // assumes its uppercase
 	}
 	
 	return 1;
+}
+
+int save_user_join_pwd(const char * pretty_user_input_join_password) {
+	FILE *fp = fopen(JOIN_PASSWORD_TXT, "wb");
+	if (fp == 0) {
+		return -1;
+	}
+	
+	if (pretty_user_input_join_password[0] == 0) {
+		fclose(fp);
+		return 0;
+	}
+	
+	fputs(pretty_user_input_join_password, fp);
+	fclose(fp);
+	return 0;
+}
+
+void load_user_join_pwd(char * pretty_user_input_join_password) {
+	memset(pretty_user_input_join_password,0,0x10+1);
+	FILE *fp = fopen(JOIN_PASSWORD_TXT, "rb");
+	if (fp == 0) {
+		return;
+	}
+	
+	fread(pretty_user_input_join_password,1,0x10,fp);
+	
+	fclose(fp);
 }
 
 int save_global_title_id_to_disk() {
@@ -1175,14 +1216,14 @@ void patch_eboot_thread(void *arg)
 	FILE *fp;
 	//
 	if (args->use_patch_cache) {
-		int current_cache_line_len = strlen(my_url.url) + strlen(my_url.digest) + strlen(args->title_id) + strlen(args->patch_lua_name);
+		int current_cache_line_len = strlen(my_url.url) + strlen(my_url.digest) + strlen(args->title_id) + strlen(args->patch_lua_name) + 0x10+1;
 		// TODO memory leak here, but this can only happen once so it does not really matter
 		current_cache_line = malloc(current_cache_line_len + 1);
 		if (!current_cache_line) {
 			args->has_finished = 1;
 			sysThreadExit(THREAD_RET_EBOOT_BACKUP_FAILED);
 		}
-		snprintf(current_cache_line,current_cache_line_len + 1,"%s%s%s%s",my_url.url,my_url.digest,args->title_id,args->patch_lua_name);
+		snprintf(current_cache_line,current_cache_line_len + 1,"%s%s%s%s%s",my_url.url,my_url.digest,args->title_id,args->patch_lua_name,args->join_password);
 		dbglogger_log("Checking if theres a cache for %s",current_cache_line);
 		
 		fp = fopen(CACHE_TXT_FILE, "ab+");
@@ -1295,8 +1336,9 @@ void patch_eboot_thread(void *arg)
 	lua_pushstring(L,my_url.digest);
 	lua_pushboolean(L,args->normalise_digest);
 	lua_pushstring(L,WORKING_DIR);
+	lua_pushstring(L,args->join_password);
 	
-    if (lua_pcall(L, 5, 1, 0) != LUA_OK) {
+    if (lua_pcall(L, 6, 1, 0) != LUA_OK) {
         // gonna pop the error later
 		// dbglogger_log("Error calling function: %s", lua_tostring(L, -1));
 		args->has_finished = 1;
@@ -1457,6 +1499,7 @@ s32 main(s32 argc, const char* argv[])
 	second_thread_args.normalise_digest = 1;
 	memset(second_thread_args.patch_lua_name,0,sizeof(second_thread_args.patch_lua_name));
 	second_thread_args.title_id[0] = 0;
+	memset(second_thread_args.join_password,0,0x10+1);
 	get_idps((u8*)second_thread_args.idps);
 	
 	struct LuaPatchDetails patch_lua_names[MAX_LINES];
@@ -1526,7 +1569,7 @@ s32 main(s32 argc, const char* argv[])
 
     sysModuleLoad(SYSMODULE_PNGDEC);
 
-    atexit(exiting); // Tiny3D register the event 3 and do exit() call when you exit  to the menu
+    atexit(exiting); // Tiny3D register the event 3 and do exit() call when you exit to the menu
 
 	sys_ppu_thread_t second_thread_id;
 	u64 second_thread_retval;
@@ -1653,6 +1696,9 @@ s32 main(s32 argc, const char* argv[])
 		dbglogger_log("found some functions but they had no patch_method_ string for it");
 		return 1;
 	}
+	lua_pushboolean(L, 1);
+	lua_setglobal(L, "IS_BIG_ENDIAN");
+	
 	method_index = 0;
 
 	// Ok, everything is setup. Now for the main loop.
@@ -1857,6 +1903,10 @@ s32 main(s32 argc, const char* argv[])
 								current_menu = MENU_BROWSE_GAMES;
 								menu_arrow = 0;
 								break;
+							case 4:
+								input("Enter in join key (leave empty if only play alone) (follow best password practices!)",second_thread_args.join_password,sizeof(second_thread_args.join_password));
+								save_user_join_pwd(second_thread_args.join_password);
+								break;
 							default:
 								if (!title_id_exists(global_title_id)) {
 									error_yet_to_press_ok = 1;
@@ -2021,7 +2071,7 @@ s32 main(s32 argc, const char* argv[])
         drawScene(current_menu,menu_arrow,is_alive_toggle_thing,error_yet_to_press_ok,error_msg,yes_no_game_popup,
 		started_a_thread,second_thread_args.current_state,&icon_0_main,&icon_0_main_index,saved_urls_txt_num,second_thread_args.normalise_digest,second_thread_args.use_patch_cache,
 		browse_games_buffer,browse_games_buffer_size,browse_games_buffer_start,global_title_id,
-		method_count,patch_lua_names); // Draw
+		method_count,patch_lua_names, second_thread_args.join_password); // Draw
 		is_alive_toggle_thing = !is_alive_toggle_thing;
 
         /* DRAWING FINISH HERE */
