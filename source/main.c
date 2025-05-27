@@ -826,13 +826,13 @@ int save_user_join_pwd(const char * pretty_user_input_join_password) {
 }
 
 void load_user_join_pwd(char * pretty_user_input_join_password) {
-	memset(pretty_user_input_join_password,0,0x10+1);
+	memset(pretty_user_input_join_password,0,4096+1);
 	FILE *fp = fopen(JOIN_PASSWORD_TXT, "rb");
 	if (fp == 0) {
 		return;
 	}
 	
-	fread(pretty_user_input_join_password,1,0x10,fp);
+	fread(pretty_user_input_join_password,1,4096,fp);
 	
 	fclose(fp);
 }
@@ -1216,7 +1216,7 @@ void patch_eboot_thread(void *arg)
 	FILE *fp;
 	//
 	if (args->use_patch_cache) {
-		int current_cache_line_len = strlen(my_url.url) + strlen(my_url.digest) + strlen(args->title_id) + strlen(args->patch_lua_name) + 0x10+1;
+		int current_cache_line_len = strlen(my_url.url) + strlen(my_url.digest) + strlen(args->title_id) + strlen(args->patch_lua_name) + strlen(args->join_password);
 		// TODO memory leak here, but this can only happen once so it does not really matter
 		current_cache_line = malloc(current_cache_line_len + 1);
 		if (!current_cache_line) {
@@ -1499,7 +1499,7 @@ s32 main(s32 argc, const char* argv[])
 	second_thread_args.normalise_digest = 1;
 	memset(second_thread_args.patch_lua_name,0,sizeof(second_thread_args.patch_lua_name));
 	second_thread_args.title_id[0] = 0;
-	memset(second_thread_args.join_password,0,0x10+1);
+	memset(second_thread_args.join_password,0,4096+1);
 	get_idps((u8*)second_thread_args.idps);
 	
 	struct LuaPatchDetails patch_lua_names[MAX_LINES];
