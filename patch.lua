@@ -482,6 +482,8 @@ local function user_agent_is_valid(offset, file, url, respect_https)
 		new_user_agent = "PatchworkLBP1 1.0"
 	elseif string.sub(existing_url_str, 1, #"MM CHTTPClient LBP2") == "MM CHTTPClient LBP2" then
 		new_user_agent = "PatchworkLBP2 1.0"
+	elseif string.sub(existing_url_str, 1, #"MM CHTTPClient LBPVita") == "MM CHTTPClient LBPVita" then
+		new_user_agent = "PatchworkLBPV 1.0"
 	end
 
 	write_new_thing(file, offset, new_user_agent, in_size_url)
