@@ -220,7 +220,7 @@ local REPLACE_DIGESTS <const> = {
 	"$ghj3rLl2e5E28@~[!\x00", -- lbpv digest
 	"9yF*A&L#5i3q@9|&*F\x00", -- lbp hub digest
 	"CustomServerDigest\x00" -- refresher patcher digest
-	-- "C5S^FWw*8yIp3O%Me!\x00" -- ps4 digest, ps4 uses a differnt digest calcluation so its not included here
+	-- "C5S^FWw*8yIp3O%Me!\x00" -- ps4 digest, ps4 uses a different digest calcluation so its not included here
 }
 local NORMALISE_DIGEST <const> = "!?/*hjk7duOZ1f@daX" -- we will put the trailing null later
 
