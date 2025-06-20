@@ -40,11 +40,6 @@ jobs:
           run: |
             make install
 
-        # i have no clue how this built on my pc
-        - name: Patch in SYSUTIL_OSK_INPUT_ENTERED for text_input.c
-          run: |
-            sed -i '/#define OSK_IME_DIALOG_MAX_TITLE_LENGTH  (128)/a #define SYSUTIL_OSK_INPUT_ENTERED        0x505' source/text_input.c
-
         - name: Build
           run: |
             python3 build.py
