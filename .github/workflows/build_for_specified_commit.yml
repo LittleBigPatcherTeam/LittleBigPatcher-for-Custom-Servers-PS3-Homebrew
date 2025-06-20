@@ -1,0 +1,74 @@
+# Help from
+# https://github.com/bucanero/apollo-ps3/blob/031964f2df03745be14790cb39e80f36477594f0/.github/workflows/build.yml
+
+name: Build for specified commit
+
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'The commit to build for'
+        required: true
+
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+        - name : echo commit
+          run: echo "${{ github.event.inputs.commit }}"
+
+        - name: Checkout with full history
+          uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+
+        - name: Checkout dbglogger
+          uses: actions/checkout@v4
+          with:
+            repository: bucanero/dbglogger
+            path: dbglogger
+
+        - name: Install python 3
+          run: sudo apt install python3
+
+        - name: Install python 2
+          run: sudo apt install python2.7
+
+          # using pre-compiled sdk
+        - name: Download PSL1GHT Toolchain
+          run: |
+            curl -sL https://github.com/bucanero/ps3toolchain/releases/download/ubuntu-latest-fad3b5fb/ps3dev-ubuntu-latest-2020-08-31.tar.gz | tar xvz -C ./
+            echo "PS3DEV=${GITHUB_WORKSPACE}/ps3dev" >> $GITHUB_ENV
+            echo "PSL1GHT=${GITHUB_WORKSPACE}/ps3dev" >> $GITHUB_ENV
+
+        - name: Install dbglogger
+          working-directory: dbglogger
+          run: |
+            make install
+
+        - name: Switch to specified commit
+          run: git checkout ${{ github.event.inputs.commit }}
+
+        # i have no clue how this built on my pc
+        - name: Patch in SYSUTIL_OSK_INPUT_ENTERED for text_input.c
+          run: |
+            sed -i '/#define OSK_IME_DIALOG_MAX_TITLE_LENGTH  (128)/a #define SYSUTIL_OSK_INPUT_ENTERED        0x505' source/text_input.c
+
+        - name: Build
+          run: |
+            python3 build.py
+
+        - name: Calculate hash of build
+          id: build_hash
+          run: |
+            BUILD_HASH=$(sha256sum LittleBigPatcher-for-Custom-Servers-PS3-Homebrew.pkg | cut -d ' ' -f 1)
+            echo "build_hash=$BUILD_HASH" >> $GITHUB_OUTPUT
+
+        - name: Push artifact
+          uses: actions/upload-artifact@v4
+          with:
+            name: sha256_${{ steps.build_hash.outputs.build_hash }}
+            path: LittleBigPatcher-for-Custom-Servers-PS3-Homebrew.pkg
+            if-no-files-found: error
