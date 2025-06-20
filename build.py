@@ -14,7 +14,7 @@ def main() -> int:
         x.rename(include_dir / x.name) # moves the files up one dir to source folder
     
     try:
-        subprocess.run(('make','pkg'))
+        subprocess.run(('make','pkg'),check=True)
     finally:
         for x in the_files:
             new_x = x.parent.parent  / x.name
