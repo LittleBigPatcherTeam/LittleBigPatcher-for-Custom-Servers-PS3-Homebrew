@@ -13,6 +13,8 @@ https://github.com/bucanero/apollo-ps3/blob/master/source/dialog.c
 #include <sysutil/osk.h>
 #include <sysutil/sysutil.h>
 
+#define SYSUTIL_OSK_INPUT_ENTERED        0x505
+
 #define OSK_IME_DIALOG_MAX_TITLE_LENGTH  (128)
 #define OSK_IME_DIALOG_MAX_TEXT_LENGTH   (512)
 
