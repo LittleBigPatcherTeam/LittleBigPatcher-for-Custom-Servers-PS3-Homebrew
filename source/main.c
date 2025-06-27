@@ -983,8 +983,15 @@ void load_saved_urls(u8 saved_urls_txt_num) {
 		if (len_of_line != 0) {
 			strcpy(temp_url.url,line);
 		}
-		
-		
+
+		if (strcmp(temp_url.url,"http://lnfinite.site/LITTLEBIGPLANETPS3_XML") == 0) {
+			strcpy(temp_url.url,"http://infinitelbp.com/LITTLEBIGPLANETPS3_XML");
+		}
+		if (strcmp(temp_url.url,"https://lnfinite.site/LITTLEBIGPLANETPS3_XML") == 0) {
+			strcpy(temp_url.url,"https://infinitelbp.com/LITTLEBIGPLANETPS3_XML");
+		}
+
+
 		memcpy(&saved_urls[ready_url_i],&temp_url,sizeof(struct UrlToPatchTo));
 		saved_urls_count++;
 		
