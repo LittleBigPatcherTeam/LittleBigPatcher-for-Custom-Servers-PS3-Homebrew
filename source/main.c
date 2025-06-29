@@ -990,7 +990,12 @@ void load_saved_urls(u8 saved_urls_txt_num) {
 		if (strcmp(temp_url.url,"https://lnfinite.site/LITTLEBIGPLANETPS3_XML") == 0) {
 			strcpy(temp_url.url,"https://infinitelbp.com/LITTLEBIGPLANETPS3_XML");
 		}
-
+		if (strcmp(temp_url.url,"http://refresh.jvyden.xyz:2095/lbp") == 0) {
+			strcpy(temp_url.url,"http://lbp.lbpbonsai.com/lbp");
+		}
+		if (strcmp(temp_url.url,"https://refresh.jvyden.xyz:2095/lbp") == 0) {
+			strcpy(temp_url.url,"https://lbp.lbpbonsai.com/lbp");
+		}
 
 		memcpy(&saved_urls[ready_url_i],&temp_url,sizeof(struct UrlToPatchTo));
 		saved_urls_count++;

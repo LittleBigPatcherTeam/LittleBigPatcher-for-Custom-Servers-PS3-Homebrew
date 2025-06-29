@@ -1,7 +1,7 @@
 #ifndef SAVE_FOLDERS_H_   /* Include guard */
 #define SAVE_FOLDERS_H_
 
-#define VERSION_NUM_STR "v2.023"
+#define VERSION_NUM_STR "v2.024"
 
 #define ROOT_DIR "/dev_hdd0/game/LBPCSPPHB/USRDIR/"
 #define WORKING_DIR ROOT_DIR "temp_files/"
@@ -13,7 +13,7 @@
 #define PATCH_LUA_FILE ROOT_DIR PATCH_LUA_FILE_NAME
 
 #define DEFAULT_URLS "http://lighthouse.lbpunion.com/LITTLEBIGPLANETPS3_XML\n"\
-					 "http://refresh.jvyden.xyz:2095/lbp CustomServerDigest\n"\
+					 "http://lbp.lbpbonsai.com/lbp CustomServerDigest\n"\
 					 "http://infinitelbp.com/LITTLEBIGPLANETPS3_XML\n"\
 
 #define DEFAULT_COLOUR_CONFIG "// they are rgba hex colour codes, not rgb hex colour codes, so if you want red FF0000 for example, put in #FF0000FF, othwise it wont be visible\n"\
