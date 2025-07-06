@@ -1,9 +1,11 @@
 #ifndef SAVE_FOLDERS_H_   /* Include guard */
 #define SAVE_FOLDERS_H_
 
-#define VERSION_NUM_STR "v2.024"
+#define VERSION_NUM_STR "v2.025"
 
 #define ROOT_DIR "/dev_hdd0/game/LBPCSPPHB/USRDIR/"
+#define UPDATE_DOWNLOAD_LINK "https://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/releases/latest/download/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew.pkg"
+#define UPDATE_LOCATION "/dev_hdd0/packages/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew.pkg"
 #define WORKING_DIR ROOT_DIR "temp_files/"
 #define CACHE_DIR ROOT_DIR "cache_do_not_touch_only_delete_entire_folder/"
 #define COLOUR_CONFIG_FILE ROOT_DIR "colours_config.txt"

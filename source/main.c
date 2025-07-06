@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
+#include "http.h"
 #include "colours_config.h"
 #include "font_stuff.h"
 #include "text_input.h"
@@ -85,6 +86,8 @@ int BTN_CIRCLE;
 #define THREAD_RET_EBOOT_PATCHED 6
 #define THREAD_RET_EBOOT_BACKUP_FAILED 7
 
+#define THREAD_RET_COULD_NOT_DOWNLOAD_LATEST_PKG 1
+
 #define THREAD_CURRENT_STATE_CLEANING_WORKSPACE 1
 #define THREAD_CURRENT_STATE_RESTORING_EBOOT_BIN_BAK 2
 #define THREAD_CURRENT_STATE_DECRYPTING_EBOOT_BIN 3
@@ -116,6 +119,7 @@ int BTN_CIRCLE;
 #define YES_NO_GAME_POPUP_REVERT_EBOOT 1
 #define YES_NO_GAME_POPUP_PATCH_GAME 2
 
+#define CURRENTLY_CHECKING_FOR_UPDATES 3
 
 // globals instead of macros because we need to swap them in init if the user has circle for enter
 char MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CROSS_BTN[3];
@@ -129,6 +133,8 @@ char MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CIRCLE_BTN[3];
 #define CAUSE_A_PS3_FREEZE *(int*)0x69 = 0
 
 #define DONE_A_SWITCH has_done_a_switch = 1; load_global_title_id(); load_user_join_pwd(second_thread_args.join_password)
+
+char global_newest_version_tag[sizeof(VERSION_NUM_STR)];
 
 padInfo padinfo;
 padData paddata;
@@ -163,6 +169,7 @@ char global_title_id[sizeof(DEFAULT_TITLE_ID)] = DEFAULT_TITLE_ID;
 void exiting()
 {
     sysModuleUnload(SYSMODULE_PNGDEC);
+	http_end();
 }
 
 unsigned get_button_pressed(int enter_button)
@@ -523,6 +530,9 @@ char * join_password
 	else if (started_a_thread != 0) {
 		y += CHARACTER_HEIGHT;
 		switch (started_a_thread) {
+			case CURRENTLY_CHECKING_FOR_UPDATES:
+				DrawFormatString(x,y,"Checking for LittleBigPatcherTeam updates. Please wait...");
+				break;
 			case YES_NO_GAME_POPUP_REVERT_EBOOT:
 				DrawFormatString(x,y,"Reverting patches on your game. Please wait...");
 				break;
@@ -1501,6 +1511,56 @@ void patch_eboot_thread(void *arg)
 	sysThreadExit(THREAD_RET_EBOOT_PATCHED);
 }
 
+void check_for_updates_thread(void *arg) {
+	struct SecondThreadArgs *args = arg;
+
+	int http_init_ret = http_init();
+	if (http_init_ret != HTTP_SUCCESS) {
+		dbglogger_log("http_init failed with %d",http_init_ret);
+		args->has_finished = 1;
+		sysThreadExit(0);
+	}
+	
+	// quick way of not needing to parse json
+	// always assuming that it will start with [{"name":"v0.000
+	char newest_version_tag_buffer[sizeof("[{\"name\":\"v0.000")] = {0};
+	
+	
+	http_init_ret = http_download_to_buffer(
+		"https://api.github.com/repos/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/tags",
+		"",
+		newest_version_tag_buffer,
+		sizeof(newest_version_tag_buffer)-1,
+		HTTP_ALLOW_SMALLER_BUFFER_SIZE
+	);
+	
+	if (http_init_ret == HTTP_SUCCESS) {
+		strcpy(global_newest_version_tag,newest_version_tag_buffer + strlen("[{\"name\":\""));
+		dbglogger_log("global_newest_version_tag = %s",global_newest_version_tag);
+	}
+	else {
+		dbglogger_log("Failed to get newest tag from https github 0x%x",http_init_ret);
+		args->has_finished = 1;
+		sysThreadExit(0);
+	}
+	
+	// TODO double check if version is newest or not
+	if (strcmp(VERSION_NUM_STR,global_newest_version_tag) == 0) {
+		args->has_finished = 1;
+		sysThreadExit(0);
+	}
+
+	http_init_ret = http_download(UPDATE_DOWNLOAD_LINK,"",UPDATE_LOCATION);
+	if (http_init_ret == HTTP_SUCCESS) {
+		args->has_finished = 1;
+		sysThreadExit(0);
+	}
+	else {
+		args->has_finished = 1;
+		sysThreadExit(THREAD_RET_COULD_NOT_DOWNLOAD_LATEST_PKG);
+	}
+}
+
 s32 main(s32 argc, const char* argv[])
 {
 	//dbglogger_init();
@@ -1602,6 +1662,7 @@ s32 main(s32 argc, const char* argv[])
 	
 	u8 error_yet_to_press_ok = 0;
 	bool exit_after_done = 0;
+	bool allow_triangle_bypass_exit_after_done = 0;
 	char error_msg[1000];
 	char patch_method[sizeof(patch_lua_names[0].patch_method)];
 	
@@ -1624,8 +1685,10 @@ s32 main(s32 argc, const char* argv[])
 	u32 browse_games_buffer_max_size = MAX_LINES;
 	u32 browse_games_buffer_size = 0;
 	struct TitleIdAndGameName browse_games_buffer[browse_games_buffer_max_size];
-
-
+	
+	bool first_time = 1;
+	bool checked_for_updates_yet = 0;
+	
 	sysUtilGetSystemParamInt(SYSUTIL_SYSTEMPARAM_ID_ENTER_BUTTON_ASSIGN, &enter_button);
 	if (enter_button == 1) {
 		BTN_CIRCLE = 32;
@@ -1717,6 +1780,47 @@ s32 main(s32 argc, const char* argv[])
 	while(1) {
 		// menu control logic
 		my_btn = get_button_pressed(enter_button);
+		if (first_time) {
+			if (!checked_for_updates_yet) {
+				if (!started_a_thread) {
+					sysThreadCreate(&second_thread_id,check_for_updates_thread,(void *)&second_thread_args,SECOND_THREAD_PRIORITY,SECOND_THREAD_STACK_SIZE,THREAD_JOINABLE,SECOND_THREAD_NAME);
+					started_a_thread = CURRENTLY_CHECKING_FOR_UPDATES;
+				}
+				if (second_thread_args.has_finished) {
+					sysThreadJoin(second_thread_id,&second_thread_retval);
+					second_thread_args.has_finished = 0;
+					started_a_thread = 0;
+					
+					exit_after_done = 1;
+					error_yet_to_press_ok = 1;
+					allow_triangle_bypass_exit_after_done = 1;
+					
+					if (global_newest_version_tag[0] == 0) {
+						sprintf(error_msg,"Could not get newest version\nPlease check your internet connection then open this again");
+					}
+					else if (strcmp(VERSION_NUM_STR,global_newest_version_tag) != 0) {
+						if (second_thread_retval == THREAD_RET_COULD_NOT_DOWNLOAD_LATEST_PKG) {
+							sprintf(error_msg,"New version available %s.\nBut could not download it, likely because you are on RPCS3\nDownload at\nhttps://github.com/LittleBigPatcherTeam/LittleBigPatcher-for-Custom-Servers-PS3-Homebrew/releases\nthen install it",global_newest_version_tag);
+						}
+						else {
+							sprintf(error_msg,"New version available %s.\nPlease install it from\nPackage Manager -> PS3 System Storage",global_newest_version_tag);
+						}
+					}
+					else {
+						error_yet_to_press_ok = 0;
+						exit_after_done = 0;
+						allow_triangle_bypass_exit_after_done = 0;
+					}
+					
+					checked_for_updates_yet = 1;
+				}
+				goto draw_scene_direct;
+			}
+			done_with_first_time_checking:
+			first_time = 0;
+			goto draw_scene_direct;
+		}
+		
 		if (!(my_btn & old_btn)) {
 			// special menus, popups
 			if (error_yet_to_press_ok) {
@@ -1725,6 +1829,18 @@ s32 main(s32 argc, const char* argv[])
 						return 0; // oscetool does not clean up after its done, i managed to make it sort of clean up for decrypt then encrypt but not after that
 					}
 					error_yet_to_press_ok = 0;
+				}
+				
+				/* 
+				I will prefer people to not use outdated versions, but i understand that people have their reasons, so they can press BTN_TRIANGLE to continue.
+				However the only mention of that will be here
+				*/
+				if (my_btn & BTN_TRIANGLE) {
+					if (allow_triangle_bypass_exit_after_done) {
+						exit_after_done = 0;
+						error_yet_to_press_ok = 0;
+						allow_triangle_bypass_exit_after_done = 0;
+					}
 				}
 				goto draw_scene_direct;
 			}

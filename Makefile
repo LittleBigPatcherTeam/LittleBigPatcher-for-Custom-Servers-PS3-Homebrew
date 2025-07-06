@@ -41,7 +41,7 @@ INCLUDES	:=	include
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS		:=	-lfont3d -lfreetype -lpng -ltiny3d -lrsx -lz -lsimdmath -lgcm_sys -lio -lsysutil -lrt -llv2 -lsysmodule -lm -lpngdec -ldbglogger -lnet -lsysmodule
+LIBS		:=	-lfont3d -lfreetype -lpng -ltiny3d -lrsx -lz -lsimdmath -lgcm_sys -lio -lsysutil -lrt -llv2 -lsysmodule -lm -lpngdec -ldbglogger -lnet -lsysmodule -lssl -lhttp -lhttputil
 
 
 #---------------------------------------------------------------------------------
