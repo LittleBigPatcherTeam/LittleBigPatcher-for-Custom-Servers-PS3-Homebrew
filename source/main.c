@@ -501,7 +501,12 @@ char * join_password
 	rainbow_colour = get_next_rainbow_colour();
 	
     tiny3d_Project2D(); // change to 2D context (remember you it works with 848 x 512 as virtual coordinates)
-    DrawBackground2D(BACKGROUND_COLOUR); 
+    if (BACKGROUND_COLOUR == 522001152) {
+		DrawBackground2D(rainbow_colour); 
+	}
+	else {
+		DrawBackground2D(BACKGROUND_COLOUR);
+	}
 
     SetFontSize(NORMAL_TEXT_X, NORMAL_TEXT_Y);
     SetFontColor(TITLE_FONT_COLOUR,TITLE_BG_COLOUR);
