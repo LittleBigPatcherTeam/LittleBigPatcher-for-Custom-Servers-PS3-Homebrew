@@ -23,7 +23,7 @@
 #define PARAM_SFO_TYPE_UTF8 0x0204
 #define GAME_NAME_KEY "TITLE"
 
-char * get_title_id_from_param(char * param_sfo_file_name)
+char * get_utf8_from_param(char * param_sfo_file_name,char * key_buffer, int buffer_size, char * game_name_key, int key_size)
 {
 	FILE *sfo;
 	
@@ -66,7 +66,6 @@ char * get_title_id_from_param(char * param_sfo_file_name)
 	bool found_a_null_char_in_game_name = 0;
 	
 	int go_back_here;
-	char key_buffer[sizeof(GAME_NAME_KEY)];
 	
 	u16 key_offset; /*** param_key offset (relative to start offset of key_table) */
 	u16 data_fmt; /***** param_data data type */
@@ -97,12 +96,11 @@ char * get_title_id_from_param(char * param_sfo_file_name)
 		go_back_here = ftell(sfo);
 		
 		fseek(sfo,key_table_start+key_offset,SEEK_SET);
-		fread(&key_buffer,1,sizeof(key_buffer),sfo);
-		if (memcmp(key_buffer,GAME_NAME_KEY,sizeof(GAME_NAME_KEY)) != 0) {
+		fread(key_buffer,1,buffer_size,sfo);
+		if (memcmp(key_buffer,game_name_key,key_size) != 0) {
 			fseek(sfo,go_back_here,SEEK_SET);
 			continue;
 		}
-		
 		fseek(sfo,data_table_start+data_offset,SEEK_SET);
 		
 		// we do data_max_len because some param.sfo editors do not edit the data_len, and the ps3 still reads this full title
@@ -132,4 +130,10 @@ char * get_title_id_from_param(char * param_sfo_file_name)
 	
 	fclose(sfo);
 	return 0;
+}
+
+
+char * get_title_id_from_param(char * param_sfo_file_name) {
+	char key_buffer[sizeof(GAME_NAME_KEY)];
+	return get_utf8_from_param(param_sfo_file_name,key_buffer,key_buffer,GAME_NAME_KEY,sizeof(GAME_NAME_KEY));
 }
