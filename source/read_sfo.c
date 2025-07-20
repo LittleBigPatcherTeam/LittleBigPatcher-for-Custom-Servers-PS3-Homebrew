@@ -22,6 +22,7 @@
 #define PARAM_SFO_HEADER 0x46535000
 #define PARAM_SFO_TYPE_UTF8 0x0204
 #define GAME_NAME_KEY "TITLE"
+#define GAME_CATEGORY_KEY "CATEGORY"
 
 char * get_utf8_from_param(char * param_sfo_file_name,char * key_buffer, int buffer_size, char * game_name_key, int key_size)
 {
@@ -135,5 +136,10 @@ char * get_utf8_from_param(char * param_sfo_file_name,char * key_buffer, int buf
 
 char * get_title_id_from_param(char * param_sfo_file_name) {
 	char key_buffer[sizeof(GAME_NAME_KEY)];
-	return get_utf8_from_param(param_sfo_file_name,key_buffer,key_buffer,GAME_NAME_KEY,sizeof(GAME_NAME_KEY));
+	return get_utf8_from_param(param_sfo_file_name,key_buffer,sizeof(key_buffer),GAME_NAME_KEY,sizeof(GAME_NAME_KEY));
+}
+
+char * get_category_from_param(char * param_sfo_file_name) {
+	char key_buffer[sizeof(GAME_CATEGORY_KEY)];
+	return get_utf8_from_param(param_sfo_file_name,key_buffer,sizeof(key_buffer),GAME_CATEGORY_KEY,sizeof(GAME_CATEGORY_KEY));
 }

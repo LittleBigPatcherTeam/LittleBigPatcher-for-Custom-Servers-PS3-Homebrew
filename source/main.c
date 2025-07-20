@@ -1663,6 +1663,7 @@ s32 main(s32 argc, const char* argv[])
 	
 	int yes_no_game_popup = 0;
 	char * game_title;
+	char * game_category;
 	char param_sfo_path[sizeof("/dev_hdd0/game/ABCD12345/PARAM.SFO")];
 	
 	u8 error_yet_to_press_ok = 0;
@@ -2052,8 +2053,19 @@ s32 main(s32 argc, const char* argv[])
 								sprintf(icon_0_main_path,"/dev_hdd0/game/%s/ICON0.PNG",global_title_id);
 								load_png_from_filename_to_memory(&icon_0_main,&icon_0_main_index,icon_0_main_path);
 								sprintf(param_sfo_path,"/dev_hdd0/game/%s/PARAM.SFO",global_title_id);
+								game_category = get_category_from_param(param_sfo_path);
+								// default to digital eboot if cant read param.sfo
+								global_is_digital_eboot = 1;
+								if (game_category != 0) {
+									// GD is Game Data (update data), DG is Disc Game, usually HG Harddrive Game will be digital
+									if ((strcmp(game_category,"GD") == 0) || (strcmp(game_category,"DG") == 0)) {
+										global_is_digital_eboot = 0;
+									}
+									free(game_category);
+								}
+								
 								game_title = get_title_id_from_param(param_sfo_path);
-								if (game_title == 0 ) {
+								if (game_title == 0) {
 									game_title = malloc(sizeof("Unknown??"));
 									strcpy(game_title,"Unknown??");
 								}

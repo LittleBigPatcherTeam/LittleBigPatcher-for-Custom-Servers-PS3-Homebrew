@@ -61,7 +61,6 @@ int decrypt_with_klic(sce_info_t *sce_info) {
   if (!npdrm_info) {
     return 0;
   }
-  global_is_digital_eboot = 1;
   strcpy(global_content_id,npdrm_info->content_id);
   keyset_t *np_keyset = find_keyset_by_name("NP_klic_key");
   if (!np_keyset) {
