@@ -43,7 +43,7 @@ A simple way to patch your LittleBigPlanet games to connect to custom servers wi
   - [oscetool vs scetool](#section-id-92)
   - [Decryption oscetool command](#section-id-95)
   - [Encryption oscetool command (disc)](#section-id-101)
-  - [How does it know if EBOOT.BIN is digital or disc](how-detect-digital-id)
+  - [How does it know if EBOOT.BIN is digital or disc](#how-detect-digital-id)
   - [Encryption oscetool command (digital)](#section-id-107)
   - [Patching method for main series](#section-id-113)
   - [Patching method for LittleBigPlanet Karting](#section-id-131)
