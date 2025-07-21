@@ -43,6 +43,7 @@ A simple way to patch your LittleBigPlanet games to connect to custom servers wi
   - [oscetool vs scetool](#section-id-92)
   - [Decryption oscetool command](#section-id-95)
   - [Encryption oscetool command (disc)](#section-id-101)
+  - [How does it know if EBOOT.BIN is digital or disc](how-detect-digital-id)
   - [Encryption oscetool command (digital)](#section-id-107)
   - [Patching method for main series](#section-id-113)
   - [Patching method for LittleBigPlanet Karting](#section-id-131)
@@ -215,6 +216,15 @@ command was taken from [UnionPatcher](https://github.com/LBPUnion/UnionPatcher/b
 ```
 ./oscetool --verbose --sce-type=SELF --skip-sections=FALSE --self-add-shdrs=TRUE --compress-data=TRUE --key-revision=0A --self-app-version=0001000000000000 --self-auth-id=1010000001000003 --self-vendor-id=01000002 --self-ctrl-flags=0000000000000000000000000000000000000000000000000000000000000000 --self-cap-flags=00000000000000000000000000000000000000000000003B0000000100040000 --self-type=NPDRM --self-fw-version=0003005500000000 --np-license-type=FREE --np-app-type=SPRX --np-content-id=UP0001-LBPCSPPHB_00-0000000000000000 --np-real-fname=EBOOT.BIN --encrypt /dev_hdd0/game/LBPCSPPHB/USRDIR/temp_files/EBOOT.ELF path/to/EBOOT.BIN
 ```
+
+<div id='how-detect-digital-id'/>
+
+## How does it know if EBOOT.BIN is digital or disc
+It will check the `PARAM.SFO` file in the game's folder and check the `CATERGORY` of it,
+### DG is Disc Game (disc)
+### GD is Game Data (update data, so disc)
+### HG is Harddrive Game (digital)
+### anything else is digital
 
 <div id='section-id-113'/>
 
