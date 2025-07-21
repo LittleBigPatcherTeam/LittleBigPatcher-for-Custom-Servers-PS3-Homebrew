@@ -5,6 +5,7 @@ https://github.com/bucanero/apollo-ps3/blob/master/source/dialog.c
 
 #include <tiny3d.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <stdarg.h>
 #include <unistd.h>
 #include <string.h>
@@ -39,6 +40,30 @@ static uint16_t g_ime_input[OSK_IME_DIALOG_MAX_TEXT_LENGTH + 1];
 
 
 #define countof(_array) (sizeof(_array) / sizeof(_array[0]))
+
+/*
+https://stackoverflow.com/questions/1488372/mimic-pythons-strip-function-in-c
+*/
+char *strstrip(char *s)
+{
+        size_t size;
+        char *end;
+
+        size = strlen(s);
+
+        if (!size)
+                return s;
+
+        end = s + size - 1;
+        while (end >= s && isspace(*end))
+                end--;
+        *(end + 1) = '\0';
+
+        while (*s && isspace(*s))
+                s++;
+
+        return s;
+}
 
 static void osk_exit(void)
 {
@@ -333,6 +358,8 @@ tiny3d_Flip();
         
     }
 
-    return (convert_from_utf16(g_ime_input, text, size));
+    int res = (convert_from_utf16(g_ime_input, text, size));
+	strcpy(text,strstrip(text));
+	return res;
 }
 
