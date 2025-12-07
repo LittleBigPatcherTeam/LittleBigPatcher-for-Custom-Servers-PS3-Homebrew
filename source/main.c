@@ -156,7 +156,7 @@ struct UrlToPatchTo {
 };
 
 struct LuaPatchDetails {
-	char patch_name[PATCH_LUA_SIZE];
+	char patch_name[PATCH_LUA_SIZE + 1];
 	char patch_method[PATCH_METHOD_LUA_STRING_SIZE];
 };
 
@@ -1235,7 +1235,7 @@ void patch_eboot_thread(void *arg)
 	char out_bin[sizeof("/dev_hdd0/game/ABCD12345/USRDIR/EBOOT.BIN")];
 	sprintf(out_bin,"/dev_hdd0/game/%s/USRDIR/EBOOT.BIN",args->title_id);
 
-	char lua_func_name[PATCH_LUA_SIZE + sizeof("patch_")];
+	char lua_func_name[PATCH_LUA_SIZE + 1 + sizeof("patch_")];
 	
 	// variables only use if use_patch_cache
 	int line_num_of_caches = 0;

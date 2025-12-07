@@ -15,7 +15,7 @@ struct SecondThreadArgs {
 	char join_password[4096+1];
 	bool use_patch_cache;
 	u64 idps[2];
-	char patch_lua_name[256];
+	char patch_lua_name[PATCH_LUA_SIZE + 1];
     char title_id[sizeof("BCES12345")];
 };
 
