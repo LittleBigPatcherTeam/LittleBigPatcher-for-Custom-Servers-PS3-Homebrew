@@ -69,7 +69,7 @@ int BTN_CIRCLE;
 #define MAX_CAPITIAL_W_CHARACTERS_PER_LINE 30
 #define NEW_LINES_AMNT_PER_DIGIT_OF_X_INCREASE 8 // seems to be good
 #define MAX_LINES 11-1 // minus 1 for title
-#define MAX_LINE_LEN_OF_URL_ENTRY MAX_URL_LEN_INCL_NULL - 1 + MAX_DIGEST_LEN_INCL_NULL - 1 + sizeof(" ")
+#define MAX_LINE_LEN_OF_URL_ENTRY MAX_URL_LEN_INCL_NULL - 1 + MAX_DIGEST_LEN_INCL_NULL - 1 + strlen(" ") + PATCH_LUA_SIZE + strlen(" ")
 
 #define CHARACTER_HEIGHT 45
 #define NORMAL_TEXT_X 18 // this has to be even
@@ -150,14 +150,15 @@ struct TitleIdAndGameName {
 	char game_name[128];
 };
 
-struct UrlToPatchTo {
-	char url[MAX_URL_LEN_INCL_NULL];
-	char digest[MAX_DIGEST_LEN_INCL_NULL];
-};
-
 struct LuaPatchDetails {
 	char patch_name[PATCH_LUA_SIZE + 1];
 	char patch_method[PATCH_METHOD_LUA_STRING_SIZE];
+};
+
+typedef struct UrlToPatchTo {
+	char url[MAX_URL_LEN_INCL_NULL];
+	char patch_name[PATCH_LUA_SIZE + 1];
+	char digest[MAX_DIGEST_LEN_INCL_NULL];
 };
 
 struct UrlToPatchTo saved_urls[MAX_LINES-1];
@@ -915,7 +916,7 @@ bool is_a_url_selected() {
 
 void write_saved_urls(u8 saved_urls_txt_num) {
 	struct UrlToPatchTo url_entry;
-	char write_buffer[sizeof(url_entry.url) + 1 + sizeof(url_entry.digest) + 1 + 1];
+	char write_buffer[sizeof(url_entry.url) + 1 + sizeof(url_entry.digest) + 1 + sizeof(url_entry.patch_name) + 1 + 1];
 
 
 	char filename[sizeof(SAVED_URLS_TXT_FIRST_HALF) + (sizeof("_ff")-1) + sizeof(SAVED_URLS_TXT_SECOND_HALF)];
@@ -925,10 +926,10 @@ void write_saved_urls(u8 saved_urls_txt_num) {
 	for (int i = 0; i < saved_urls_count; i++) {
 		url_entry = saved_urls[i];
 		if (url_entry.digest[0] != 0) {
-			sprintf(write_buffer,"%s %s\n",url_entry.url,url_entry.digest);
+			sprintf(write_buffer,"%s %s %s\n",url_entry.url,url_entry.patch_name,url_entry.digest);
 		}
 		else {
-			sprintf(write_buffer,"%s\n",url_entry.url);
+			sprintf(write_buffer,"%s %s\n",url_entry.url,url_entry.patch_name);
 		}
 		
 		fprintf(fp,write_buffer);
@@ -938,8 +939,6 @@ void write_saved_urls(u8 saved_urls_txt_num) {
 }
 
 void load_saved_urls(u8 saved_urls_txt_num) {
-	u8 digest_offset_from_line;
-	u8 digest_len;
     char * line = NULL;
     size_t len = 0;
     ssize_t len_of_line;
@@ -949,6 +948,8 @@ void load_saved_urls(u8 saved_urls_txt_num) {
 
 	FILE *fp = fopen(filename, "ab+"); // not checking if it fails to open, just let it segfault, cause theres bigger problems if it doesnt works
     rewind(fp);
+	char *current_line_part;
+	int current_index_to_copy_to;
 	int ready_url_i = 0;
 	saved_urls_count = 0;
 	while ((len_of_line = __getline(&line, &len, fp)) > 0) {
@@ -965,54 +966,50 @@ void load_saved_urls(u8 saved_urls_txt_num) {
 			len_of_line = MAX_LINE_LEN_OF_URL_ENTRY;
 		}
 		
-		// getting all the characters after first space, not including the space
-		digest_offset_from_line = strcspn(line, " ");
-		digest_len = len_of_line - digest_offset_from_line;
-
-		struct UrlToPatchTo temp_url;
-		temp_url.url[0] = 0;
-		temp_url.digest[0] = 0;		
-
-		if (digest_len != 0) {
-			digest_len--;
-			// remove extra chars on digest
-			if (digest_len > MAX_DIGEST_LEN_INCL_NULL-1)  {
-				digest_len = MAX_DIGEST_LEN_INCL_NULL-1;
+		char temp_url[MAX_LINE_LEN_OF_URL_ENTRY + 1];
+		char temp_digest[MAX_LINE_LEN_OF_URL_ENTRY + 1];
+		char temp_patch_method[MAX_LINE_LEN_OF_URL_ENTRY + 1];
+		current_line_part = strtok(line, " ");
+		current_index_to_copy_to = 0;
+		while (current_line_part != NULL) {
+			current_index_to_copy_to++;
+			if (current_index_to_copy_to > 3) {
+				break;
 			}
-			memcpy(temp_url.digest,line+digest_offset_from_line+1,digest_len);
-			temp_url.digest[digest_len] = 0; // ensure it wont read leftover data
+			if (current_index_to_copy_to == 1) {
+				strcpy(temp_url,current_line_part);
+			}
+			else if (current_index_to_copy_to == 2) {
+				strcpy(temp_patch_method,current_line_part);
+			}
+			else if (current_index_to_copy_to == 3) {
+				strcpy(temp_digest,current_line_part);
+			}
 			
-			// removing the digest off the line, itll just be left with the url
-			line[digest_offset_from_line] = 0;
-			len_of_line -= digest_len;
-			len_of_line--; // for the space char
+			current_line_part = strtok(NULL, " ");
+		}
+		dbglogger_log("current_index_to_copy_to = %d",current_index_to_copy_to);
+		if (current_index_to_copy_to == 2) {
+			strcpy(temp_digest,"");
+		}
+		else if (current_index_to_copy_to != 3) {
+			continue;
 		}
 		
-
-		// remove any extra chars
-		if(len_of_line > MAX_URL_LEN_INCL_NULL-1) {
-			line[MAX_URL_LEN_INCL_NULL-1] = 0;
-			len_of_line = MAX_URL_LEN_INCL_NULL;
-		}
 		
-		if (len_of_line != 0) {
-			strcpy(temp_url.url,line);
+		if (strlen(temp_url) > sizeof(saved_urls[0].url)-1) {
+			temp_url[sizeof(saved_urls[0].url)-1] = 0;
+		}
+		if (strlen(temp_digest) > sizeof(saved_urls[0].digest)-1) {
+			temp_digest[sizeof(saved_urls[0].digest)-1] = 0;
+		}
+		if (strlen(temp_patch_method) > sizeof(saved_urls[0].patch_name)-1) {
+			temp_patch_method[sizeof(saved_urls[0].patch_name)-1] = 0;
 		}
 
-		if (strcmp(temp_url.url,"http://lnfinite.site/LITTLEBIGPLANETPS3_XML") == 0) {
-			strcpy(temp_url.url,"http://infinitelbp.com/LITTLEBIGPLANETPS3_XML");
-		}
-		if (strcmp(temp_url.url,"https://lnfinite.site/LITTLEBIGPLANETPS3_XML") == 0) {
-			strcpy(temp_url.url,"https://infinitelbp.com/LITTLEBIGPLANETPS3_XML");
-		}
-		if (strcmp(temp_url.url,"http://refresh.jvyden.xyz:2095/lbp") == 0) {
-			strcpy(temp_url.url,"http://lbp.lbpbonsai.com/lbp");
-		}
-		if (strcmp(temp_url.url,"https://refresh.jvyden.xyz:2095/lbp") == 0) {
-			strcpy(temp_url.url,"https://lbp.lbpbonsai.com/lbp");
-		}
-
-		memcpy(&saved_urls[ready_url_i],&temp_url,sizeof(struct UrlToPatchTo));
+		strcpy(saved_urls[ready_url_i].url,temp_url);
+		strcpy(saved_urls[ready_url_i].digest,temp_digest);
+		strcpy(saved_urls[ready_url_i].patch_name,temp_patch_method);
 		saved_urls_count++;
 		
 		
@@ -1023,10 +1020,12 @@ void load_saved_urls(u8 saved_urls_txt_num) {
 		
     }
 	
+	
 	if (ready_url_i < sizeof(saved_urls) / sizeof(saved_urls[0])) {
 		while (ready_url_i < sizeof(saved_urls) / sizeof(saved_urls[0])) {
 			struct UrlToPatchTo temp_url_2;
 			strcpy(temp_url_2.url,"ENTER_A_URL_HERE");
+			strcpy(temp_url_2.patch_name,"lbp_main");
 			strcpy(temp_url_2.digest,"");
 			memcpy(&saved_urls[ready_url_i],&temp_url_2,sizeof(struct UrlToPatchTo));
 			saved_urls_count++;
@@ -1568,7 +1567,7 @@ void check_for_updates_thread(void *arg) {
 
 s32 main(s32 argc, const char* argv[])
 {
-	//dbglogger_init();
+	dbglogger_init_str("udp:239.255.0.100:30000");
 	
 	// init the global second_thread_args
 	second_thread_args.has_finished = 0;
