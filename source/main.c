@@ -103,6 +103,8 @@ int BTN_CIRCLE;
 
 #define MENU_SELECT_URLS 1
 #define MENU_SELECT_URLS_ARROW saved_urls_count-1
+#define MENU_URL_EDITOR_ARROW 2+(method_count-1)
+#define MINUS_MENU_ARROW_AMNT_URL_EDITOR_TO_GET_PATCH_LUA_INDEX 2
 
 #define MENU_EDIT_URLS 2
 #define MENU_EDIT_URLS_ARROW saved_urls_count-1
@@ -110,9 +112,10 @@ int BTN_CIRCLE;
 #define MENU_PATCH_GAMES_ARROW_NOT_INCL_PATCHES 5-1
 #define MINUS_MENU_ARROW_AMNT_TO_GET_PATCH_LUA_INDEX MENU_PATCH_GAMES_ARROW_NOT_INCL_PATCHES + 1
 #define MENU_PATCH_GAMES_ARROW MENU_PATCH_GAMES_ARROW_NOT_INCL_PATCHES+method_count
-#define MENU_PATCH_GAMES 3
+#define MENU_URL_EDITOR 3
+#define MENU_PATCH_GAMES 4
 
-#define MENU_BROWSE_GAMES 4
+#define MENU_BROWSE_GAMES 5
 
 
 #define YES_NO_POPUP_ARROW 2-1
@@ -774,6 +777,30 @@ char * join_password
 				SetFontSize(NORMAL_TEXT_X,NORMAL_TEXT_Y);
 				i++;
 			}
+			break;
+		case MENU_URL_EDITOR:
+			DrawFormatString(x,y,"Server URL Editor",selected_url_index);
+			y += CHARACTER_HEIGHT;
+			bg_colour = (menu_arrow == 0) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
+			SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
+			DrawFormatString(x,y,"URL: %s",saved_urls[selected_url_index].url);
+			y += CHARACTER_HEIGHT;
+			bg_colour = (menu_arrow == 1) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
+			SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
+			DrawFormatString(x,y,"Digest (put CustomServerDigest if refresh based server, otherwise leave empty): %s",saved_urls[selected_url_index].digest);
+
+			y += CHARACTER_HEIGHT;
+
+			for (int i = 0; i < method_count; i++) {
+				font_colour = (strcmp(saved_urls[selected_url_index].patch_name,patch_lua_names[i].patch_name) == 0) ? TURNED_ON_FONT_COLOUR : SELECTABLE_NORMAL_FONT_COLOUR;
+				bg_colour = (menu_arrow-MINUS_MENU_ARROW_AMNT_URL_EDITOR_TO_GET_PATCH_LUA_INDEX == i) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
+				SetFontColor(font_colour, bg_colour);
+				SetFontColor(font_colour, bg_colour);
+				
+				DrawFormatString(x,y,"Patch method: %s",patch_lua_names[i].patch_method);
+				y += CHARACTER_HEIGHT;
+			}
+
 			break;
 		case MENU_BROWSE_GAMES:
 			DrawFormatString(x,y,"Browse games! Title id: %s",global_title_id);
@@ -1966,6 +1993,9 @@ s32 main(s32 argc, const char* argv[])
 				if (current_menu == MENU_BROWSE_GAMES) {
 					current_menu = MENU_PATCH_GAMES;
 				}
+				else if (current_menu == MENU_URL_EDITOR) {
+					current_menu = MENU_EDIT_URLS;
+				}
 				else {
 					current_menu = MENU_MAIN;
 				}
@@ -2103,19 +2133,35 @@ s32 main(s32 argc, const char* argv[])
 						break;
 					case MENU_SELECT_URLS:
 						selected_url_index = (menu_arrow == selected_url_index) ? RESET_SELECTED_URL_INDEX : menu_arrow;
+						
 						break;
 					case MENU_EDIT_URLS:
-						selected_url_index = RESET_SELECTED_URL_INDEX;
-						temp_editing_url = saved_urls[menu_arrow];
-
-						strcpy(editing_url_text_buffer,temp_editing_url.url);
-						input("Enter in a URL",editing_url_text_buffer,sizeof(temp_editing_url.url));
-						strcpy(saved_urls[menu_arrow].url,editing_url_text_buffer);
-						strcpy(saved_urls[menu_arrow].digest,temp_editing_url.digest);
-						
-						write_saved_urls(saved_urls_txt_num);
-						
+						selected_url_index = menu_arrow;
+						current_menu = MENU_URL_EDITOR;
 						break;
+					case MENU_URL_EDITOR:
+						switch (menu_arrow) {
+							case 0:
+								strcpy(editing_url_text_buffer,saved_urls[selected_url_index].url);
+								edit_url_input:
+								input("Enter in a URL",editing_url_text_buffer,sizeof(saved_urls[selected_url_index].url));
+								if (editing_url_text_buffer[0] == 0) {
+									goto edit_url_input;
+								}
+								strcpy(saved_urls[selected_url_index].url,editing_url_text_buffer);
+								break;
+							case 1:
+								strcpy(editing_url_text_buffer,saved_urls[selected_url_index].digest);
+								input("Enter in a digest key, put in CustomServerDigest if this is a refresh server otherwise leave empty",editing_url_text_buffer,sizeof(saved_urls[selected_url_index].digest));
+								
+								strcpy(saved_urls[selected_url_index].digest,editing_url_text_buffer);
+								break;
+							default:
+								method_index = menu_arrow - MINUS_MENU_ARROW_AMNT_URL_EDITOR_TO_GET_PATCH_LUA_INDEX;
+								strcpy(saved_urls[selected_url_index].patch_name,patch_lua_names[method_index].patch_name);
+								break;
+						}
+						write_saved_urls(saved_urls_txt_num);
 					case MENU_BROWSE_GAMES:
 						strcpy(global_title_id,browse_games_buffer[menu_arrow - browse_games_buffer_start].title_id);
 						save_global_title_id_to_disk();	
@@ -2157,7 +2203,9 @@ s32 main(s32 argc, const char* argv[])
 					menu_arrow = set_arrow(menu_arrow,my_btn,MENU_PATCH_GAMES_ARROW);
 
 					break;
-				
+				case MENU_URL_EDITOR:
+					menu_arrow = set_arrow(menu_arrow,my_btn,MENU_URL_EDITOR_ARROW);
+					break;
 				case MENU_EDIT_URLS:
 				case MENU_SELECT_URLS:
 					if (has_done_a_switch) {
