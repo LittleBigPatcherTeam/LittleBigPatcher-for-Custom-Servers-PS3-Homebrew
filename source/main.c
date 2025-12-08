@@ -813,6 +813,20 @@ char * join_password
 
 }
 
+// Source - https://stackoverflow.com/a
+// Posted by Aaron, modified by community. See post 'Timeline' for change history
+// Retrieved 2025-12-08, License - CC BY-SA 4.0
+
+void remove_spaces(char* s) {
+    char* d = s;
+    do {
+        while (*d == ' ') {
+            ++d;
+        }
+    } while ((*s++ = *d++));
+}
+
+
 bool is_valid_title_id(char* title_id) // assumes its uppercase
 {
 	if(strlen(title_id) != 9) {
@@ -2146,7 +2160,8 @@ s32 main(s32 argc, const char* argv[])
 								strcpy(editing_url_text_buffer,saved_urls[selected_url_index].url);
 								edit_url_input:
 								input("Enter in a URL",editing_url_text_buffer,sizeof(saved_urls[selected_url_index].url));
-								if (editing_url_text_buffer[0] == 0) {
+								remove_spaces(editing_url_text_buffer);
+                if (editing_url_text_buffer[0] == 0) {
 									goto edit_url_input;
 								}
 								strcpy(saved_urls[selected_url_index].url,editing_url_text_buffer);
@@ -2154,7 +2169,8 @@ s32 main(s32 argc, const char* argv[])
 							case 1:
 								strcpy(editing_url_text_buffer,saved_urls[selected_url_index].digest);
 								input("Enter in a digest key, put in CustomServerDigest if this is a refresh server otherwise leave empty",editing_url_text_buffer,sizeof(saved_urls[selected_url_index].digest));
-								
+								remove_spaces(editing_url_text_buffer);
+                
 								strcpy(saved_urls[selected_url_index].digest,editing_url_text_buffer);
 								break;
 							default:
