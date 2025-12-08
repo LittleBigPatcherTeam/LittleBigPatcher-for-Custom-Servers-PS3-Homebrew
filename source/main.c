@@ -1009,7 +1009,7 @@ void load_saved_urls(u8 saved_urls_txt_num) {
 
 			current_line_part = strtok(NULL, " ");
 		}
-		dbglogger_log("current_index_to_copy_to = %d",current_index_to_copy_to);
+
 		if (current_index_to_copy_to == 2) {
 			strcpy(temp_digest,"");
 		}
@@ -1588,7 +1588,7 @@ void check_for_updates_thread(void *arg) {
 
 s32 main(s32 argc, const char* argv[])
 {
-	dbglogger_init_str("udp:239.255.0.100:30000");
+	//dbglogger_init();
 
 	// init the global second_thread_args
 	second_thread_args.has_finished = 0;
