@@ -805,6 +805,20 @@ char * join_password
 
 }
 
+// Source - https://stackoverflow.com/a
+// Posted by Aaron, modified by community. See post 'Timeline' for change history
+// Retrieved 2025-12-08, License - CC BY-SA 4.0
+
+void remove_spaces(char* s) {
+    char* d = s;
+    do {
+        while (*d == ' ') {
+            ++d;
+        }
+    } while ((*s++ = *d++));
+}
+
+
 bool is_valid_title_id(char* title_id) // assumes its uppercase
 {
 	if(strlen(title_id) != 9) {
@@ -2106,6 +2120,7 @@ s32 main(s32 argc, const char* argv[])
 						if (menu_arrow % 2 == 0) { // url menu_arrow even case
 							strcpy(editing_url_text_buffer,temp_editing_url.url);
 							input("Enter in a URL",editing_url_text_buffer,sizeof(temp_editing_url.url));
+							remove_spaces(editing_url_text_buffer);
 							
 							strcpy(saved_urls[menu_arrow/2].url,editing_url_text_buffer);
 							strcpy(saved_urls[menu_arrow/2].digest,temp_editing_url.digest);
@@ -2113,6 +2128,7 @@ s32 main(s32 argc, const char* argv[])
 						else { // digest menu_arrow odd case
 							strcpy(editing_url_text_buffer,temp_editing_url.digest);
 							input("Enter in a digest key, put in CustomServerDigest if this is a refresh server otherwise leave empty",editing_url_text_buffer,sizeof(temp_editing_url.digest));
+							remove_spaces(editing_url_text_buffer);
 							strcpy(saved_urls[menu_arrow/2].digest,editing_url_text_buffer);
 							strcpy(saved_urls[menu_arrow/2].url,temp_editing_url.url);
 						}
