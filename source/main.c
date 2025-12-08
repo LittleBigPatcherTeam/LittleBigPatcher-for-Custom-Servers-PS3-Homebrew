@@ -2161,7 +2161,7 @@ s32 main(s32 argc, const char* argv[])
 								edit_url_input:
 								input("Enter in a URL",editing_url_text_buffer,sizeof(saved_urls[selected_url_index].url));
 								remove_spaces(editing_url_text_buffer);
-                if (editing_url_text_buffer[0] == 0) {
+								if (editing_url_text_buffer[0] == 0) {
 									goto edit_url_input;
 								}
 								strcpy(saved_urls[selected_url_index].url,editing_url_text_buffer);
