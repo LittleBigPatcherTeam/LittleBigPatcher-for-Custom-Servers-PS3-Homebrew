@@ -2179,6 +2179,7 @@ s32 main(s32 argc, const char* argv[])
 								break;
 						}
 						write_saved_urls(saved_urls_txt_num);
+						break;
 					case MENU_BROWSE_GAMES:
 						strcpy(global_title_id,browse_games_buffer[menu_arrow - browse_games_buffer_start].title_id);
 						save_global_title_id_to_disk();
