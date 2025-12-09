@@ -492,7 +492,7 @@ u32 get_next_rainbow_colour() {
 void drawScene(u8 current_menu,int menu_arrow, u8 error_yet_to_press_ok, char* error_msg, int yes_no_game_popup, int started_a_thread, int thread_current_state,
 pngData *texture_input, int * img_index, u8 saved_urls_txt_num, bool normalise_digest_checked,bool use_patch_cache_checked,struct TitleIdAndGameName browse_games_buffer[], u32 browse_games_buffer_size, u32 browse_games_buffer_start,char * global_title_id,
 int method_count, struct LuaPatchDetails patch_lua_names[],
-char * join_password
+char * join_password, bool allow_triangle_bypass_exit_after_done
 )
 {
 	u32 rainbow_colour;
@@ -530,6 +530,10 @@ char * join_password
 		y += CHARACTER_HEIGHT*8; // give a bunch of space for title
 		SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, SELECTED_FONT_BG_COLOUR);
 		DrawFormatString(x,y,"Press %s to continue",MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CROSS_BTN);
+		if (allow_triangle_bypass_exit_after_done) {
+			y += CHARACTER_HEIGHT;
+			DrawFormatString(x,y,"Press "MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_TRIANGLE_BTN" to skip update");
+		}
 		draw_png(texture_input,*img_index,DRAW_ICON_0_MAIN_PNG_X,DRAW_ICON_0_MAIN_PNG_Y);
 		return;
 	}
@@ -1875,10 +1879,6 @@ s32 main(s32 argc, const char* argv[])
 					error_yet_to_press_ok = 0;
 				}
 
-				/*
-				I will prefer people to not use outdated versions, but i understand that people have their reasons, so they can press BTN_TRIANGLE to continue.
-				However the only mention of that will be here
-				*/
 				if (my_btn & BTN_TRIANGLE) {
 					if (allow_triangle_bypass_exit_after_done) {
 						exit_after_done = 0;
@@ -2276,7 +2276,7 @@ s32 main(s32 argc, const char* argv[])
         drawScene(current_menu,menu_arrow,error_yet_to_press_ok,error_msg,yes_no_game_popup,
 		started_a_thread,second_thread_args.current_state,&icon_0_main,&icon_0_main_index,saved_urls_txt_num,second_thread_args.normalise_digest,second_thread_args.use_patch_cache,
 		browse_games_buffer,browse_games_buffer_size,browse_games_buffer_start,global_title_id,
-		method_count,patch_lua_names, second_thread_args.join_password); // Draw
+		method_count,patch_lua_names, second_thread_args.join_password,allow_triangle_bypass_exit_after_done); // Draw
 
         /* DRAWING FINISH HERE */
 
