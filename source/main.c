@@ -65,7 +65,7 @@ int BTN_CIRCLE;
 #define DRAW_ICON_0_MAIN_PNG_X 524
 #define DRAW_ICON_0_MAIN_PNG_Y 57
 
-#define START_X_FOR_PRESS_TO_REFRESH_THINGS_TEXT 295
+#define START_X_FOR_PRESS_TO_REFRESH_THINGS_TEXT 793
 #define MAX_CAPITIAL_W_CHARACTERS_PER_LINE 30
 #define NEW_LINES_AMNT_PER_DIGIT_OF_X_INCREASE 8 // seems to be good
 #define MAX_LINES 11-1 // minus 1 for title
@@ -489,7 +489,7 @@ u32 get_next_rainbow_colour() {
 
 #define SetFontColor(font_colour_in, bg_colour_in) SetFontColor((font_colour_in == 522001152) ? rainbow_colour : font_colour_in, (bg_colour_in == 522001152) ? rainbow_colour : bg_colour_in)
 
-void drawScene(u8 current_menu,int menu_arrow, bool is_alive_toggle_thing, u8 error_yet_to_press_ok, char* error_msg, int yes_no_game_popup, int started_a_thread, int thread_current_state,
+void drawScene(u8 current_menu,int menu_arrow, u8 error_yet_to_press_ok, char* error_msg, int yes_no_game_popup, int started_a_thread, int thread_current_state,
 pngData *texture_input, int * img_index, u8 saved_urls_txt_num, bool normalise_digest_checked,bool use_patch_cache_checked,struct TitleIdAndGameName browse_games_buffer[], u32 browse_games_buffer_size, u32 browse_games_buffer_start,char * global_title_id,
 int method_count, struct LuaPatchDetails patch_lua_names[],
 char * join_password
@@ -514,7 +514,7 @@ char * join_password
     SetFontColor(TITLE_FONT_COLOUR,TITLE_BG_COLOUR);
 	x= 0.0; y = 0.0;
 
-	DrawFormatString(START_X_FOR_PRESS_TO_REFRESH_THINGS_TEXT,y,"Press "MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_TRIANGLE_BTN" to refresh things if ->%d<- is a solid 1 or 0, app is frozen " VERSION_NUM_STR,is_alive_toggle_thing);
+	DrawFormatString(START_X_FOR_PRESS_TO_REFRESH_THINGS_TEXT,y,VERSION_NUM_STR);
 
 
 
@@ -662,7 +662,7 @@ char * join_password
 			DrawString(x,y,"Things will have this font colour if it is selected");
 			y += CHARACTER_HEIGHT;
 			SetFontColor(TITLE_FONT_COLOUR,TITLE_BG_COLOUR);
-			DrawFormatString(x,y,"Press %s to enter menus and select things",MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CROSS_BTN);
+			DrawFormatString(x,y,"Press %s to enter menus and select things, press "MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_TRIANGLE_BTN" to refresh things",MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CROSS_BTN);
 			y += CHARACTER_HEIGHT;
 			DrawFormatString(x,y,"Press %s to go back to the previous menu",MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CIRCLE_BTN);
 			y += CHARACTER_HEIGHT;
@@ -1699,8 +1699,6 @@ s32 main(s32 argc, const char* argv[])
 	char editing_url_text_buffer[72];
 
 
-	bool is_alive_toggle_thing = 0;
-
 	int yes_no_game_popup = 0;
 	char * game_title;
 	char * game_category;
@@ -2275,11 +2273,10 @@ s32 main(s32 argc, const char* argv[])
             TINY3D_BLEND_FUNC_DST_RGB_ONE_MINUS_SRC_ALPHA | TINY3D_BLEND_FUNC_DST_ALPHA_ZERO,
             TINY3D_BLEND_RGB_FUNC_ADD | TINY3D_BLEND_ALPHA_FUNC_ADD);
 
-        drawScene(current_menu,menu_arrow,is_alive_toggle_thing,error_yet_to_press_ok,error_msg,yes_no_game_popup,
+        drawScene(current_menu,menu_arrow,error_yet_to_press_ok,error_msg,yes_no_game_popup,
 		started_a_thread,second_thread_args.current_state,&icon_0_main,&icon_0_main_index,saved_urls_txt_num,second_thread_args.normalise_digest,second_thread_args.use_patch_cache,
 		browse_games_buffer,browse_games_buffer_size,browse_games_buffer_start,global_title_id,
 		method_count,patch_lua_names, second_thread_args.join_password); // Draw
-		is_alive_toggle_thing = !is_alive_toggle_thing;
 
         /* DRAWING FINISH HERE */
 
