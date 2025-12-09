@@ -627,12 +627,12 @@ char * join_password
 
 			bg_colour = (menu_arrow == 0) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
 			SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
-			DrawString(x,y,"Select url");
+			DrawString(x,y,"Select URL");
 			y += CHARACTER_HEIGHT;
 
 			bg_colour = (menu_arrow == 1) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
 			SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
-			DrawString(x,y,"Edit urls");
+			DrawString(x,y,"Edit URLs");
 			y += CHARACTER_HEIGHT;
 
 
@@ -645,10 +645,10 @@ char * join_password
 			font_colour = (use_patch_cache_checked) ? TURNED_ON_FONT_COLOUR : SELECTABLE_NORMAL_FONT_COLOUR;
 			SetFontColor(font_colour, bg_colour);
 			if (use_patch_cache_checked) {
-				DrawString(x,y,"Patch cache: ON (turn OFF to clear cache)");
+				DrawString(x,y,"Patch Cache: ON (turn OFF to clear cache)");
 			}
 			else {
-				DrawString(x,y,"Patch cache: OFF (useful if you switch URLS often when ON)");
+				DrawString(x,y,"Patch Cache: OFF (useful if you switch URLS often when ON)");
 			}
 
 			y += CHARACTER_HEIGHT;
@@ -674,7 +674,7 @@ char * join_password
 			DrawString(x,y,"As per GPL-3.0 licence you MUST be provided the source code of this app!, refer to above for more info");
 			break;
 		case MENU_PATCH_GAMES:
-			DrawFormatString(x,y,"Patch a game");
+			DrawFormatString(x,y,"Patch Games");
 			y += CHARACTER_HEIGHT;
 
 			bg_colour = (menu_arrow == 0) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
@@ -720,10 +720,10 @@ char * join_password
 		case MENU_EDIT_URLS:
 			switch (current_menu) {
 				case MENU_SELECT_URLS:
-					DrawFormatString(x,y,"Select url (Page %d/99)",saved_urls_txt_num);
+					DrawFormatString(x,y,"Select URL (Page %d/99)",saved_urls_txt_num);
 					break;
 				case MENU_EDIT_URLS:
-					DrawFormatString(x,y,"Edit urls (Page %d/99)",saved_urls_txt_num);
+					DrawFormatString(x,y,"Edit URLs (Page %d/99)",saved_urls_txt_num);
 					break;
 			}
 
