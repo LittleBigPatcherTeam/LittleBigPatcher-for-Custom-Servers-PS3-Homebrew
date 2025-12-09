@@ -773,7 +773,7 @@ char * join_password
 			}
 			break;
 		case MENU_URL_EDITOR:
-			DrawFormatString(x,y,"Server URL Editor",selected_url_index);
+			DrawFormatString(x,y,"Server URL Editor");
 			y += CHARACTER_HEIGHT;
 			bg_colour = (menu_arrow == 0) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
 			SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
