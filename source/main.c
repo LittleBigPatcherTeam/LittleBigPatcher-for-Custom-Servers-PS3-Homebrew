@@ -119,6 +119,7 @@ int BTN_CIRCLE;
 #define YES_NO_POPUP_ARROW 2-1
 #define YES_NO_GAME_POPUP_REVERT_EBOOT 1
 #define YES_NO_GAME_POPUP_PATCH_GAME 2
+#define YES_NO_GAME_POPUP_DELETE_URL 3
 
 #define CURRENTLY_CHECKING_FOR_UPDATES 3
 
@@ -836,7 +837,18 @@ char * join_password, bool allow_triangle_bypass_exit_after_done
 
 }
 
-// Source - https://stackoverflow.com/a
+// Source - https://stackoverflow.com/questions/15821123/removing-elements-from-an-array-in-c
+// Posted by Ben, modified by community. See post 'Timeline' for change history
+// Retrieved 2025-12-13, License - CC BY-SA 4.0
+
+void remove_element(struct UrlToPatchTo *array, int index, int array_length)
+{
+   int i;
+   for(i = index; i < array_length - 1; i++) array[i] = array[i + 1];
+}
+
+
+// Source - https://stackoverflow.com/questions/1726302/remove-spaces-from-a-string-in-c
 // Posted by Aaron, modified by community. See post 'Timeline' for change history
 // Retrieved 2025-12-08, License - CC BY-SA 4.0
 
@@ -1985,6 +1997,12 @@ s32 main(s32 argc, const char* argv[])
 								sysThreadCreate(&second_thread_id,patch_eboot_thread,(void *)&second_thread_args,SECOND_THREAD_PRIORITY,SECOND_THREAD_STACK_SIZE,THREAD_JOINABLE,SECOND_THREAD_NAME);
 								started_a_thread = YES_NO_GAME_POPUP_PATCH_GAME;
 								break;
+							case YES_NO_GAME_POPUP_DELETE_URL:
+								remove_element(&saved_urls,selected_url_index,saved_urls_count);
+								saved_urls_count--;
+								write_saved_urls(saved_urls_txt_num);
+								selected_url_index = RESET_SELECTED_URL_INDEX;
+								break;
 							default:
 								assert(0);
 						}
@@ -2040,6 +2058,23 @@ s32 main(s32 argc, const char* argv[])
 								saved_urls_txt_num--;
 							}
 						}
+						break;
+				}
+			}
+			if (my_btn & BTN_SQUARE) {
+				DONE_A_SWITCH;
+				switch (current_menu) {
+					case MENU_EDIT_URLS:
+						if (saved_urls_count <= 0) {
+							break;
+						}
+						if ((menu_arrow+1) > saved_urls_count) {
+							break;
+						}
+						selected_url_index = menu_arrow;
+						sprintf(error_msg,"Are you sure you want to delete URL\n%s",saved_urls[selected_url_index].url);
+						yes_no_game_popup = YES_NO_GAME_POPUP_DELETE_URL;
+						menu_arrow = 1;
 						break;
 				}
 			}
