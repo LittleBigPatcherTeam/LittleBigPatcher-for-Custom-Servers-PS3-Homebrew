@@ -676,7 +676,7 @@ char * join_password, bool allow_triangle_bypass_exit_after_done
 
 			y += CHARACTER_HEIGHT;
 			SetFontColor(TURNED_ON_FONT_COLOUR,0);
-			DrawFormatString(x,y,"Things will have this font colour if it is selected",MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CIRCLE_BTN);
+			DrawString(x,y,"Things will have this font colour if it is selected");
 			y += CHARACTER_HEIGHT;
 			SetFontColor(TITLE_FONT_COLOUR,TITLE_BG_COLOUR);
 			DrawString(x,y,"Check out https://littlebigpatcherteam.github.io/2025/03/03/LBPCSPPHB.html");
