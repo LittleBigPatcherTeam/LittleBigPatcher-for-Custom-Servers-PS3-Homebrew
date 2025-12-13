@@ -107,7 +107,7 @@ int BTN_CIRCLE;
 #define MINUS_MENU_ARROW_AMNT_URL_EDITOR_TO_GET_PATCH_LUA_INDEX 2
 
 #define MENU_EDIT_URLS 2
-#define MENU_EDIT_URLS_ARROW saved_urls_count-1
+#define MENU_EDIT_URLS_ARROW (saved_urls_count >= MAX_SAVED_URLS_AMNT) ? (saved_urls_count-1) : (saved_urls_count-1)+1
 
 #define MENU_PATCH_GAMES_ARROW 6-1
 #define MENU_URL_EDITOR 3
@@ -163,6 +163,7 @@ typedef struct UrlToPatchTo {
 };
 
 struct UrlToPatchTo saved_urls[MAX_LINES-1];
+#define MAX_SAVED_URLS_AMNT sizeof(saved_urls) / sizeof(saved_urls[0])
 #define RESET_SELECTED_URL_INDEX sizeof(saved_urls) / sizeof(saved_urls[0]) + 1
 s8 selected_url_index = RESET_SELECTED_URL_INDEX;
 s8 saved_urls_count = 0;
@@ -775,6 +776,24 @@ char * join_password, bool allow_triangle_bypass_exit_after_done
 				SetFontSize(NORMAL_TEXT_X,NORMAL_TEXT_Y);
 				i++;
 			}
+			
+			if (current_menu == MENU_EDIT_URLS) {
+				bool max_urls_reached = saved_urls_count >= MAX_SAVED_URLS_AMNT;
+				bg_colour = (menu_arrow == i) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
+				font_colour = SELECTABLE_NORMAL_FONT_COLOUR;
+				if (max_urls_reached) {
+					font_colour = TITLE_FONT_COLOUR;
+					bg_colour = TITLE_BG_COLOUR;
+				}
+				SetFontColor(font_colour, bg_colour);
+				if (max_urls_reached) {
+					DrawFormatString(x,y,"Please delete a URL or go to another page to add another URL");
+				}
+				else {
+					DrawFormatString(x,y,"Add new URL");
+				}
+			}
+			
 			break;
 		case MENU_URL_EDITOR:
 			DrawFormatString(x,y,"Server URL Editor");
@@ -1043,7 +1062,7 @@ void load_saved_urls(u8 saved_urls_txt_num) {
 
 
 		ready_url_i++;
-		if (ready_url_i >= sizeof(saved_urls) / sizeof(saved_urls[0])) {
+		if (ready_url_i >= MAX_SAVED_URLS_AMNT) {
 			break;
 		}
 
@@ -2140,7 +2159,10 @@ s32 main(s32 argc, const char* argv[])
 
 						break;
 					case MENU_EDIT_URLS:
-						if (saved_urls_count > 0) {
+						if ((menu_arrow+1) > saved_urls_count) {
+							
+						}
+						else {
 							selected_url_index = menu_arrow;
 							current_menu = MENU_URL_EDITOR;
 						}
