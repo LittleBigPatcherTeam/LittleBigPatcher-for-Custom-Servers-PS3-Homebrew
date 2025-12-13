@@ -781,7 +781,7 @@ char * join_password, bool allow_triangle_bypass_exit_after_done
 				SetFontSize(NORMAL_TEXT_X,NORMAL_TEXT_Y);
 				i++;
 			}
-			
+
 			if (current_menu == MENU_EDIT_URLS) {
 				bool max_urls_reached = saved_urls_count >= MAX_SAVED_URLS_AMNT;
 				bg_colour = (menu_arrow == i) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
@@ -792,13 +792,13 @@ char * join_password, bool allow_triangle_bypass_exit_after_done
 				}
 				SetFontColor(font_colour, bg_colour);
 				if (max_urls_reached) {
-					
+
 				}
 				else {
 					DrawFormatString(x,y,"Add new URL");
 				}
 			}
-			
+
 			break;
 		case MENU_URL_EDITOR:
 			DrawFormatString(x,y,"Server URL Editor");
@@ -1066,11 +1066,11 @@ void load_saved_urls(u8 saved_urls_txt_num) {
 		if (strlen(temp_patch_method) > sizeof(saved_urls[0].patch_name)-1) {
 			temp_patch_method[sizeof(saved_urls[0].patch_name)-1] = 0;
 		}
-		
+
 		if (strcmp(temp_url,"ENTER_A_URL_HERE") == 0) {
 			continue;
 		}
-		
+
 		strcpy(saved_urls[ready_url_i].url,temp_url);
 		strcpy(saved_urls[ready_url_i].digest,temp_digest);
 		strcpy(saved_urls[ready_url_i].patch_name,temp_patch_method);
@@ -2205,11 +2205,11 @@ s32 main(s32 argc, const char* argv[])
 							}
 							int new_saved_url_index = (saved_urls_count-1)+1;
 							memset(&saved_urls[new_saved_url_index],0,sizeof(saved_urls[new_saved_url_index]));
-							
+
 							strcpy(saved_urls[new_saved_url_index].url,"ENTER_A_URL_HERE");
 							strcpy(saved_urls[new_saved_url_index].patch_name,"lbp_main");
 							saved_urls_count++;
-							
+
 							selected_url_index = new_saved_url_index;
 							current_menu = MENU_URL_EDITOR;
 						}
