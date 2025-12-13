@@ -787,7 +787,7 @@ char * join_password, bool allow_triangle_bypass_exit_after_done
 				}
 				SetFontColor(font_colour, bg_colour);
 				if (max_urls_reached) {
-					DrawFormatString(x,y,"Please delete a URL or go to another page to add another URL");
+					
 				}
 				else {
 					DrawFormatString(x,y,"Add new URL");
@@ -2160,7 +2160,19 @@ s32 main(s32 argc, const char* argv[])
 						break;
 					case MENU_EDIT_URLS:
 						if ((menu_arrow+1) > saved_urls_count) {
+							if (saved_urls_count >= MAX_SAVED_URLS_AMNT) {
+								// safety check, but should never happen
+								break;
+							}
+							int new_saved_url_index = (saved_urls_count-1)+1;
+							memset(&saved_urls[new_saved_url_index],0,sizeof(saved_urls[new_saved_url_index]));
 							
+							strcpy(saved_urls[new_saved_url_index].url,"ENTER_A_URL_HERE");
+							strcpy(saved_urls[new_saved_url_index].patch_name,"lbp_main");
+							saved_urls_count++;
+							
+							selected_url_index = new_saved_url_index;
+							current_menu = MENU_URL_EDITOR;
 						}
 						else {
 							selected_url_index = menu_arrow;
