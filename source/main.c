@@ -66,9 +66,10 @@ int BTN_CIRCLE;
 #define DRAW_ICON_0_MAIN_PNG_Y 57
 
 #define START_X_FOR_PRESS_TO_REFRESH_THINGS_TEXT 793
+#define START_X_FOR_CONTROLS_TIP 100
 #define MAX_CAPITIAL_W_CHARACTERS_PER_LINE 30
 #define NEW_LINES_AMNT_PER_DIGIT_OF_X_INCREASE 8 // seems to be good
-#define MAX_LINES 11-1 // minus 1 for title
+#define MAX_LINES (11-1-1) // minus 1 for title, minus 1 for bottom controls tip
 #define MAX_LINE_LEN_OF_URL_ENTRY MAX_URL_LEN_INCL_NULL - 1 + MAX_DIGEST_LEN_INCL_NULL - 1 + strlen(" ") + PATCH_LUA_SIZE + strlen(" ")
 
 #define CHARACTER_HEIGHT 45
@@ -163,7 +164,7 @@ typedef struct UrlToPatchTo {
 	char digest[MAX_DIGEST_LEN_INCL_NULL];
 };
 
-struct UrlToPatchTo saved_urls[MAX_LINES-1];
+struct UrlToPatchTo saved_urls[MAX_LINES];
 #define MAX_SAVED_URLS_AMNT sizeof(saved_urls) / sizeof(saved_urls[0])
 #define RESET_SELECTED_URL_INDEX sizeof(saved_urls) / sizeof(saved_urls[0]) + 1
 s8 selected_url_index = RESET_SELECTED_URL_INDEX;
@@ -625,6 +626,14 @@ char * join_password, bool allow_triangle_bypass_exit_after_done
 		return;
 	}
 
+	DrawFormatString(START_X_FOR_CONTROLS_TIP,(CHARACTER_HEIGHT*(MAX_LINES+1)),"Select - %s | Go Back - %s | Change Pages - %s | Delete URL - %s | Refresh Page - %s",
+		MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CROSS_BTN,
+		MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CIRCLE_BTN,
+		MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_TRIANGLE_BTN, // TODO add in dpad left right custom character here
+		MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_SQUARE_BTN,
+		MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_TRIANGLE_BTN
+	);
+
     switch (current_menu) {
 		case MENU_MAIN:
 
@@ -662,20 +671,15 @@ char * join_password, bool allow_triangle_bypass_exit_after_done
 			bg_colour = (menu_arrow == 4) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
 			SetFontColor(SELECTABLE_NORMAL_FONT_COLOUR, bg_colour);
 			DrawString(x,y,"Exit");
+
 			y += CHARACTER_HEIGHT;
 
+			y += CHARACTER_HEIGHT;
 			SetFontColor(TURNED_ON_FONT_COLOUR,0);
-			DrawString(x,y,"Things will have this font colour if it is selected");
+			DrawFormatString(x,y,"Things will have this font colour if it is selected",MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CIRCLE_BTN);
 			y += CHARACTER_HEIGHT;
 			SetFontColor(TITLE_FONT_COLOUR,TITLE_BG_COLOUR);
-			DrawFormatString(x,y,"Press %s to enter menus and select things, press "MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_TRIANGLE_BTN" to refresh things",MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CROSS_BTN);
-			y += CHARACTER_HEIGHT;
-			DrawFormatString(x,y,"Press %s to go back to the previous menu",MY_CUSTOM_EDIT_OF_NOTO_SANS_FONT_CIRCLE_BTN);
-			y += CHARACTER_HEIGHT;
-			DrawString(x,y,"Use the D-pad (up and down) to navigate through the menus, left and right to change pages");
-			y += CHARACTER_HEIGHT;
 			DrawString(x,y,"Check out https://littlebigpatcherteam.github.io/2025/03/03/LBPCSPPHB.html");
-			// TODO make it not go off screen the last line, but really it does not matter because most people will not care
 			y += CHARACTER_HEIGHT;
 			DrawString(x,y,"As per GPL-3.0 licence you MUST be provided the source code of this app!, refer to above for more info");
 			break;
