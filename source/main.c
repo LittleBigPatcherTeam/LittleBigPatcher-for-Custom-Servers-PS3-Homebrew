@@ -103,7 +103,7 @@ int BTN_CIRCLE;
 #define MENU_MAIN_ARROW 5-1
 
 #define MENU_SELECT_URLS 1
-#define MENU_SELECT_URLS_ARROW saved_urls_count-1
+#define MENU_SELECT_URLS_ARROW (saved_urls_count-1)+1
 #define MENU_URL_EDITOR_ARROW 2+(method_count-1)
 #define MINUS_MENU_ARROW_AMNT_URL_EDITOR_TO_GET_PATCH_LUA_INDEX 2
 
@@ -121,6 +121,7 @@ int BTN_CIRCLE;
 #define YES_NO_GAME_POPUP_REVERT_EBOOT 1
 #define YES_NO_GAME_POPUP_PATCH_GAME 2
 #define YES_NO_GAME_POPUP_DELETE_URL 3
+#define YES_NO_GAME_POPUP_RESET_URLS 4
 
 #define CURRENTLY_CHECKING_FOR_UPDATES 3
 
@@ -800,6 +801,13 @@ char * join_password, bool allow_triangle_bypass_exit_after_done
 				}
 			}
 
+			if (current_menu == MENU_SELECT_URLS) {
+				bg_colour = (menu_arrow == i) ? SELECTED_FONT_BG_COLOUR : UNSELECTED_FONT_BG_COLOUR;
+				font_colour = SELECTABLE_NORMAL_FONT_COLOUR;
+				SetFontColor(font_colour, bg_colour);
+				DrawFormatString(x,y,"Reset URLs");
+			}
+
 			break;
 		case MENU_URL_EDITOR:
 			DrawFormatString(x,y,"Server URL Editor");
@@ -1207,6 +1215,31 @@ u32 load_patchable_games(struct TitleIdAndGameName buffer[], u32 start_offset, u
 		closedir(game_dir);
 	}
 	return total_count;
+}
+
+void reset_all_urls() {
+	DIR *dir_with_saved_urls = opendir(ROOT_DIR);
+	struct dirent* reader;
+	char full_path_src[1024 + strlen(ROOT_DIR)];
+	if (dir_with_saved_urls != NULL) {
+		while ((reader = readdir(dir_with_saved_urls)) != NULL) {
+			if (strcmp(reader->d_name,".") == 0 || strcmp(reader->d_name,"..") == 0) {
+				continue;
+			}
+			if (strncmp(reader->d_name, SAVED_URLS_TXT_STRING_STARTER, strlen(SAVED_URLS_TXT_STRING_STARTER)) == 0) {
+				snprintf(full_path_src, sizeof(full_path_src), "%s%s", ROOT_DIR, reader->d_name);
+				remove(full_path_src);
+			}
+
+		}
+		closedir(dir_with_saved_urls);
+	}
+	FILE *fp = fopen(NEW_NUM_1_SAVED_URLS_TXT,"wb");
+	if (fp == 0) {
+		return;
+	}
+	fwrite(DEFAULT_URLS,1,sizeof(DEFAULT_URLS)-1,fp);
+	fclose(fp);
 }
 
 int save_patch_cache_bool(bool use_patch_cache) {
@@ -2013,6 +2046,11 @@ s32 main(s32 argc, const char* argv[])
 								write_saved_urls(saved_urls_txt_num);
 								selected_url_index = RESET_SELECTED_URL_INDEX;
 								break;
+							case YES_NO_GAME_POPUP_RESET_URLS:
+								reset_all_urls();
+								load_saved_urls(saved_urls_txt_num);
+								selected_url_index = RESET_SELECTED_URL_INDEX;
+								break;
 							default:
 								assert(0);
 						}
@@ -2203,7 +2241,15 @@ s32 main(s32 argc, const char* argv[])
 						}
 						break;
 					case MENU_SELECT_URLS:
-						selected_url_index = (menu_arrow == selected_url_index) ? RESET_SELECTED_URL_INDEX : menu_arrow;
+						// on Reset URLs button
+						if (menu_arrow == (saved_urls_count-1)+1) {
+							strcpy(error_msg,"Are you sure you want to reset all URLs?\nAny URLs you saved will be lost!");
+							yes_no_game_popup = YES_NO_GAME_POPUP_RESET_URLS;
+							menu_arrow = 1;
+						}
+						else {
+							selected_url_index = (menu_arrow == selected_url_index) ? RESET_SELECTED_URL_INDEX : menu_arrow;
+						}
 
 						break;
 					case MENU_EDIT_URLS:
@@ -2259,7 +2305,7 @@ s32 main(s32 argc, const char* argv[])
 						break;
 				}
 				// put code here if you dont want the menu arrow to reset
-				if (current_menu == MENU_BROWSE_GAMES) {
+				if (current_menu == MENU_BROWSE_GAMES || yes_no_game_popup == YES_NO_GAME_POPUP_RESET_URLS) {
 
 				}
 				else {
