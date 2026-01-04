@@ -17,6 +17,7 @@
 #define DEFAULT_URLS "http://lighthouse.lbpunion.com/LITTLEBIGPLANETPS3_XML lbp_main\n"\
 					 "http://lbp.lbpbonsai.com/lbp lbp_main CustomServerDigest\n"\
 					 "http://infinitelbp.com/LITTLEBIGPLANETPS3_XML lbp_main\n"\
+					 "http://get.lbponline.com/LITTLEBIGPLANETPS3_XML lbp_main\n"\
 
 #define DEFAULT_COLOUR_CONFIG "// they are rgba hex colour codes, not rgb hex colour codes, so if you want red FF0000 for example, put in #FF0000FF, othwise it wont be visible\n"\
 							  "TITLE_FONT_COLOUR #ffffffff // white\n"\
